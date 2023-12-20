@@ -831,6 +831,9 @@ static int rpmhpd_power_on(struct generic_pm_domain *domain)
 	unsigned int corner;
 	int ret;
 
+
+	pr_err("[RPMhPD] Turning %s on\n", pd->pd.name);
+
 	mutex_lock(&rpmhpd_lock);
 
 	corner = max(pd->corner, pd->enable_corner);
@@ -847,6 +850,8 @@ static int rpmhpd_power_off(struct generic_pm_domain *domain)
 {
 	struct rpmhpd *pd = domain_to_rpmhpd(domain);
 	int ret;
+
+	pr_err("[RPMhPD] Turning %s off\n", pd->pd.name);
 
 	mutex_lock(&rpmhpd_lock);
 
@@ -883,6 +888,7 @@ static int rpmhpd_set_performance_state(struct generic_pm_domain *domain,
 		if (i < pd->enable_corner)
 			i = pd->enable_corner;
 
+		pr_err("[RPMhPD] Setting %s to %d (corner %d)\n", pd->pd.name, pd->level[i], i);
 		ret = rpmhpd_aggregate_corner(pd, i);
 		if (ret)
 			return ret;
