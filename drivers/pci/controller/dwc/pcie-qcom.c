@@ -169,6 +169,7 @@
 						PCIE_CAP_SLOT_POWER_LIMIT_SCALE)
 
 #define PERST_DELAY_US				1000
+#define CTLR_RESET_DELAY_US			2000 /* Comes from Qualcomm BSP */
 
 #define QCOM_PCIE_CRC8_POLYNOMIAL		(BIT(2) | BIT(1) | BIT(0))
 
@@ -835,7 +836,7 @@ static int qcom_pcie_init_2_3_3(struct qcom_pcie *pcie)
 		return ret;
 	}
 
-	usleep_range(2000, 2500);
+	usleep_range(CTLR_RESET_DELAY_US, CTLR_RESET_DELAY_US + 500);
 
 	ret = reset_control_bulk_deassert(ARRAY_SIZE(res->rst), res->rst);
 	if (ret < 0) {
@@ -847,7 +848,7 @@ static int qcom_pcie_init_2_3_3(struct qcom_pcie *pcie)
 	 * Don't have a way to see if the reset has completed.
 	 * Wait for some time.
 	 */
-	usleep_range(2000, 2500);
+	usleep_range(CTLR_RESET_DELAY_US, CTLR_RESET_DELAY_US + 500);
 
 	ret = clk_bulk_prepare_enable(res->num_clks, res->clks);
 	if (ret) {
@@ -1156,11 +1157,7 @@ static int qcom_pcie_init_2_9_0(struct qcom_pcie *pcie)
 		return ret;
 	}
 
-	/*
-	 * Delay periods before and after reset deassert are working values
-	 * from downstream Codeaurora kernel
-	 */
-	usleep_range(2000, 2500);
+	usleep_range(CTLR_RESET_DELAY_US, CTLR_RESET_DELAY_US + 500);
 
 	ret = reset_control_deassert(res->rst);
 	if (ret) {
@@ -1168,7 +1165,7 @@ static int qcom_pcie_init_2_9_0(struct qcom_pcie *pcie)
 		return ret;
 	}
 
-	usleep_range(2000, 2500);
+	usleep_range(CTLR_RESET_DELAY_US, CTLR_RESET_DELAY_US + 500);
 
 	return clk_bulk_prepare_enable(res->num_clks, res->clks);
 }
