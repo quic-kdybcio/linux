@@ -6,6 +6,8 @@
  * Copyright (c) 2014,2017 The Linux Foundation. All rights reserved.
  */
 
+#include <linux/firmware/qcom/qcom_scm.h>
+
 #include "adreno_gpu.h"
 
 bool hang_debug = false;
@@ -213,6 +215,14 @@ static int adreno_bind(struct device *dev, struct device *master, void *data)
 	if (IS_ERR(gpu)) {
 		dev_warn(drm->dev, "failed to load adreno gpu\n");
 		return PTR_ERR(gpu);
+	}
+
+	if (info->family >= ADRENO_6XX_GEN1 &&
+	    qcom_scm_set_gpu_smmu_aperture_is_available()) {
+		/* We currently always use context bank 0, so hard code this */
+		ret = qcom_scm_set_gpu_smmu_aperture(0);
+		if (ret)
+			DRM_DEV_ERROR(gpu->dev->dev, "unable to set SMMU aperture: %d\n", ret);
 	}
 
 	ret = dev_pm_opp_of_find_icc_paths(dev, NULL);

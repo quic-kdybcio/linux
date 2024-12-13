@@ -577,14 +577,6 @@ int adreno_hw_init(struct msm_gpu *gpu)
 
 	VERB("%s", gpu->name);
 
-	if (adreno_gpu->info->family >= ADRENO_6XX_GEN1 &&
-	    qcom_scm_set_gpu_smmu_aperture_is_available()) {
-		/* We currently always use context bank 0, so hard code this */
-		ret = qcom_scm_set_gpu_smmu_aperture(0);
-		if (ret)
-			DRM_DEV_ERROR(gpu->dev->dev, "unable to set SMMU aperture: %d\n", ret);
-	}
-
 	for (int i = 0; i < gpu->nr_rings; i++) {
 		struct msm_ringbuffer *ring = gpu->rb[i];
 
