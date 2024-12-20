@@ -97,6 +97,7 @@ description: |
         sm8450
         sm8550
         sm8650
+        x1p42100
         x1e78100
         x1e80100
 
@@ -1098,6 +1099,11 @@ properties:
               - qcom,sm8650-mtp
               - qcom,sm8650-qrd
           - const: qcom,sm8650
+
+      - items:
+          - enum:
+              - qcom,x1p42100-crd
+          - const: qcom,x1p42100
 
       - items:
           - enum:
