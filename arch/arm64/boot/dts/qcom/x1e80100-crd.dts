@@ -329,8 +329,8 @@
 		regulator-min-microvolt = <3300000>;
 		regulator-max-microvolt = <3300000>;
 
-		gpio = <&tlmm 221 GPIO_ACTIVE_HIGH>;
-		enable-active-high;
+		// gpio = <&tlmm 221 GPIO_ACTIVE_HIGH>;
+		// enable-active-high;
 
 		pinctrl-0 = <&wwan_sw_en>;
 		pinctrl-names = "default";
@@ -829,7 +829,7 @@
 };
 
 &pcie4 {
-	perst-gpios = <&tlmm 146 GPIO_ACTIVE_LOW>;
+	perst-gpios = <&tlmm 146 GPIO_ACTIVE_HIGH>;
 	wake-gpios = <&tlmm 148 GPIO_ACTIVE_LOW>;
 
 	pinctrl-0 = <&pcie4_default>;
@@ -846,7 +846,7 @@
 };
 
 &pcie5 {
-	perst-gpios = <&tlmm 149 GPIO_ACTIVE_LOW>;
+	perst-gpios = <&tlmm 149 GPIO_ACTIVE_HIGH>;
 	wake-gpios = <&tlmm 151 GPIO_ACTIVE_LOW>;
 
 	vddpe-3v3-supply = <&vreg_wwan>;
@@ -1087,6 +1087,7 @@
 			function = "gpio";
 			drive-strength = <2>;
 			bias-disable;
+			output-high;
 		};
 
 		wake-n-pins {
@@ -1094,6 +1095,13 @@
 			function = "gpio";
 			drive-strength = <2>;
 			bias-pull-up;
+		};
+
+		wlan-shutup-pins {
+			pins = "gpio117";
+			function = "gpio";
+			drive-strength = <2>;
+			output-low;
 		};
 	};
 
@@ -1110,6 +1118,7 @@
 			function = "gpio";
 			drive-strength = <2>;
 			bias-disable;
+			output-high;
 		};
 
 		wake-n-pins {
@@ -1177,6 +1186,7 @@
 		function = "gpio";
 		drive-strength = <4>;
 		bias-disable;
+		output-low;
 	};
 };
 
