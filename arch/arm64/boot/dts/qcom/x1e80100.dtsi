@@ -73,7 +73,6 @@
 			next-level-cache = <&l2_0>;
 			power-domains = <&cpu_pd0>, <&scmi_dvfs 0>;
 			power-domain-names = "psci", "perf";
-			cpu-idle-states = <&cluster_c4>;
 
 			l2_0: l2-cache {
 				compatible = "cache";
@@ -90,7 +89,6 @@
 			next-level-cache = <&l2_0>;
 			power-domains = <&cpu_pd1>, <&scmi_dvfs 0>;
 			power-domain-names = "psci", "perf";
-			cpu-idle-states = <&cluster_c4>;
 		};
 
 		cpu2: cpu@200 {
@@ -101,7 +99,6 @@
 			next-level-cache = <&l2_0>;
 			power-domains = <&cpu_pd2>, <&scmi_dvfs 0>;
 			power-domain-names = "psci", "perf";
-			cpu-idle-states = <&cluster_c4>;
 		};
 
 		cpu3: cpu@300 {
@@ -112,7 +109,6 @@
 			next-level-cache = <&l2_0>;
 			power-domains = <&cpu_pd3>, <&scmi_dvfs 0>;
 			power-domain-names = "psci", "perf";
-			cpu-idle-states = <&cluster_c4>;
 		};
 
 		cpu4: cpu@10000 {
@@ -123,7 +119,6 @@
 			next-level-cache = <&l2_1>;
 			power-domains = <&cpu_pd4>, <&scmi_dvfs 1>;
 			power-domain-names = "psci", "perf";
-			cpu-idle-states = <&cluster_c4>;
 
 			l2_1: l2-cache {
 				compatible = "cache";
@@ -140,7 +135,6 @@
 			next-level-cache = <&l2_1>;
 			power-domains = <&cpu_pd5>, <&scmi_dvfs 1>;
 			power-domain-names = "psci", "perf";
-			cpu-idle-states = <&cluster_c4>;
 		};
 
 		cpu6: cpu@10200 {
@@ -151,7 +145,6 @@
 			next-level-cache = <&l2_1>;
 			power-domains = <&cpu_pd6>, <&scmi_dvfs 1>;
 			power-domain-names = "psci", "perf";
-			cpu-idle-states = <&cluster_c4>;
 		};
 
 		cpu7: cpu@10300 {
@@ -162,7 +155,6 @@
 			next-level-cache = <&l2_1>;
 			power-domains = <&cpu_pd7>, <&scmi_dvfs 1>;
 			power-domain-names = "psci", "perf";
-			cpu-idle-states = <&cluster_c4>;
 		};
 
 		cpu8: cpu@20000 {
@@ -173,7 +165,6 @@
 			next-level-cache = <&l2_2>;
 			power-domains = <&cpu_pd8>, <&scmi_dvfs 2>;
 			power-domain-names = "psci", "perf";
-			cpu-idle-states = <&cluster_c4>;
 
 			l2_2: l2-cache {
 				compatible = "cache";
@@ -190,7 +181,6 @@
 			next-level-cache = <&l2_2>;
 			power-domains = <&cpu_pd9>, <&scmi_dvfs 2>;
 			power-domain-names = "psci", "perf";
-			cpu-idle-states = <&cluster_c4>;
 		};
 
 		cpu10: cpu@20200 {
@@ -201,7 +191,6 @@
 			next-level-cache = <&l2_2>;
 			power-domains = <&cpu_pd10>, <&scmi_dvfs 2>;
 			power-domain-names = "psci", "perf";
-			cpu-idle-states = <&cluster_c4>;
 		};
 
 		cpu11: cpu@20300 {
@@ -212,7 +201,6 @@
 			next-level-cache = <&l2_2>;
 			power-domains = <&cpu_pd11>, <&scmi_dvfs 2>;
 			power-domain-names = "psci", "perf";
-			cpu-idle-states = <&cluster_c4>;
 		};
 
 		cpu-map {
@@ -368,61 +356,73 @@
 
 		cpu_pd0: power-domain-cpu0 {
 			#power-domain-cells = <0>;
+			domain-idle-states = <&cluster_c4>;
 			power-domains = <&cluster_pd0>;
 		};
 
 		cpu_pd1: power-domain-cpu1 {
 			#power-domain-cells = <0>;
+			domain-idle-states = <&cluster_c4>;
 			power-domains = <&cluster_pd0>;
 		};
 
 		cpu_pd2: power-domain-cpu2 {
 			#power-domain-cells = <0>;
+			domain-idle-states = <&cluster_c4>;
 			power-domains = <&cluster_pd0>;
 		};
 
 		cpu_pd3: power-domain-cpu3 {
 			#power-domain-cells = <0>;
+			domain-idle-states = <&cluster_c4>;
 			power-domains = <&cluster_pd0>;
 		};
 
 		cpu_pd4: power-domain-cpu4 {
 			#power-domain-cells = <0>;
+			domain-idle-states = <&cluster_c4>;
 			power-domains = <&cluster_pd1>;
 		};
 
 		cpu_pd5: power-domain-cpu5 {
 			#power-domain-cells = <0>;
+			domain-idle-states = <&cluster_c4>;
 			power-domains = <&cluster_pd1>;
 		};
 
 		cpu_pd6: power-domain-cpu6 {
 			#power-domain-cells = <0>;
+			domain-idle-states = <&cluster_c4>;
 			power-domains = <&cluster_pd1>;
 		};
 
 		cpu_pd7: power-domain-cpu7 {
 			#power-domain-cells = <0>;
+			domain-idle-states = <&cluster_c4>;
 			power-domains = <&cluster_pd1>;
 		};
 
 		cpu_pd8: power-domain-cpu8 {
 			#power-domain-cells = <0>;
+			domain-idle-states = <&cluster_c4>;
 			power-domains = <&cluster_pd2>;
 		};
 
 		cpu_pd9: power-domain-cpu9 {
 			#power-domain-cells = <0>;
+			domain-idle-states = <&cluster_c4>;
 			power-domains = <&cluster_pd2>;
 		};
 
 		cpu_pd10: power-domain-cpu10 {
 			#power-domain-cells = <0>;
+			domain-idle-states = <&cluster_c4>;
 			power-domains = <&cluster_pd2>;
 		};
 
 		cpu_pd11: power-domain-cpu11 {
 			#power-domain-cells = <0>;
+			domain-idle-states = <&cluster_c4>;
 			power-domains = <&cluster_pd2>;
 		};
 
