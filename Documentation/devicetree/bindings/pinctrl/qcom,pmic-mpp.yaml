@@ -131,7 +131,7 @@ $defs:
           configured in analog-pass-through mode.
         enum: [1, 2, 3, 4]
 
-      qcom,dtest:
+      qcom-dtest:
         $ref: /schemas/types.yaml#/definitions/uint32
         description:
           Selects DTEST rail to route to GPIO when it's
