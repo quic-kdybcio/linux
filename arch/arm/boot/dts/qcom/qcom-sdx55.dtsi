@@ -56,15 +56,47 @@
 			reg = <0x0>;
 			enable-method = "psci";
 			clocks = <&apcs>;
-			power-domains = <&rpmhpd SDX55_CX>;
-			power-domain-names = "rpmhpd";
+			power-domains = <&cpu_pd0>;
+			power-domain-names = "psci";
 			operating-points-v2 = <&cpu_opp_table>;
+		};
+	};
+
+	domain-idle-states {
+		system_sleep_0: system-sleep-0 {
+			compatible = "domain-idle-state";
+			arm,psci-suspend-param = <0x40000008>;
+			entry-latency-us = <140>;
+			exit-latency-us = <200>;
+			min-residency-us = <8000>;
 		};
 	};
 
 	firmware {
 		scm {
 			compatible = "qcom,scm-sdx55", "qcom,scm";
+		};
+	};
+
+	idle-states {
+		entry-method = "psci";
+
+		cpu_sleep_0: cpu-sleep-0 {
+			compatible = "arm,idle-state";
+			arm,psci-suspend-param = <0x40000003>;
+			entry-latency-us = <120>;
+			exit-latency-us = <120>;
+			min-residency-us = <4488>;
+			local-timer-stop;
+		};
+
+		cpu_sleep_1: cpu-sleep-1 {
+			compatible = "arm,idle-state";
+			arm,psci-suspend-param = <0x40000004>;
+			entry-latency-us = <120>;
+			exit-latency-us = <150>;
+			min-residency-us = <6488>;
+			local-timer-stop;
 		};
 	};
 
@@ -96,6 +128,17 @@
 	psci {
 		compatible = "arm,psci-1.0";
 		method = "smc";
+
+		cpu_pd0: power-domain-cpu0 {
+			#power-domain-cells = <0>;
+			power-domains = <&system_pd>;
+			domain-idle-states = <&cpu_sleep_0>, <&cpu_sleep_1>;
+		};
+
+		system_pd: power-domain-system {
+			#power-domain-cells = <0>;
+			domain-idle-states = <&system_sleep_0>;
+		};
 	};
 
 	reserved-memory {
@@ -811,6 +854,8 @@
 			qcom,drv-id = <1>;
 			qcom,tcs-config = <ACTIVE_TCS  2>, <SLEEP_TCS   2>,
 					  <WAKE_TCS    2>, <CONTROL_TCS 1>;
+
+			power-domains = <&system_pd>;
 
 			rpmhcc: clock-controller {
 				compatible = "qcom,sdx55-rpmh-clk";
