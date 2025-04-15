@@ -17,6 +17,8 @@
 #include "../dmaengine.h"
 #include "../virt-dma.h"
 
+#include <linux/soc/qcom/geni-se.h>
+
 #define TRE_TYPE_DMA		0x10
 #define TRE_TYPE_IMMEDIATE_DMA	0x11
 #define TRE_TYPE_GO		0x20
@@ -2120,23 +2122,28 @@ static int gpi_find_avail_gpii(struct gpi_dev *gpi_dev, u32 seid)
 /* gpi_of_dma_xlate: open client requested channel */
 static struct dma_chan *gpi_of_dma_xlate(struct of_phandle_args *args,
 					 struct of_dma *of_dma,
-					 void *data)
+					 void *proto)
 {
 	struct gpi_dev *gpi_dev = (struct gpi_dev *)of_dma->of_dma_data;
+	struct geni_se se;
 	u32 seid, chid;
 	int gpii;
 	struct gchan *gchan;
 
-	if (args->args_count < 3) {
+	/* The protocol has been historically stored in the third cell */
+	if (!proto && args->args_count < 3)
+		return NULL;
+
+	if (args->args_count < 2) {
 		dev_err(gpi_dev->dev, "gpii require minimum 2 args, client passed:%d args\n",
 			args->args_count);
-		return NULL;
+		goto err;
 	}
 
 	chid = args->args[0];
 	if (chid >= MAX_CHANNELS_PER_GPII) {
 		dev_err(gpi_dev->dev, "gpii channel:%d not valid\n", chid);
-		return NULL;
+		goto err;
 	}
 
 	seid = args->args[1];
@@ -2145,20 +2152,26 @@ static struct dma_chan *gpi_of_dma_xlate(struct of_phandle_args *args,
 	gpii = gpi_find_avail_gpii(gpi_dev, seid);
 	if (gpii < 0) {
 		dev_err(gpi_dev->dev, "no available gpii instances\n");
-		return NULL;
+		goto err;
 	}
 
 	gchan = &gpi_dev->gpiis[gpii].gchan[chid];
 	if (gchan->vc.chan.client_count) {
 		dev_err(gpi_dev->dev, "gpii:%d chid:%d seid:%d already configured\n",
 			gpii, chid, gchan->seid);
-		return NULL;
+		goto err;
 	}
 
 	gchan->seid = seid;
-	gchan->protocol = args->args[2];
+	gchan->protocol = (u32)((u64)proto);
+	iounmap(se.base);
 
 	return dma_get_slave_channel(&gchan->vc.chan);
+
+err:
+	iounmap(se.base);
+
+	return NULL;
 }
 
 static int gpi_probe(struct platform_device *pdev)
