@@ -14,6 +14,7 @@
 #include <linux/of_platform.h>
 #include <linux/pinctrl/consumer.h>
 #include <linux/platform_device.h>
+#include <linux/pm_opp.h>
 #include <linux/soc/qcom/geni-se.h>
 
 /**
@@ -977,6 +978,61 @@ static struct platform_driver geni_se_driver = {
 	.probe = geni_se_probe,
 };
 module_platform_driver(geni_se_driver);
+
+struct geni_se *qcom_geni_alloc_se(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct geni_se *se;
+	int ret;
+
+	se = devm_kzalloc(dev, sizeof(*se), GFP_KERNEL);
+	if (!se)
+		return ERR_PTR(-ENOMEM);
+
+	se->base = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(se->base))
+		return se->base;
+
+	se->dev = dev;
+	se->wrapper = dev_get_drvdata(dev->parent);
+	if (!se->wrapper)
+		return ERR_PTR(-EINVAL);
+
+	se->irq = platform_get_irq(pdev, 0);
+	if (se->irq < 0)
+		return ERR_PTR(se->irq);
+
+	ret = geni_icc_get(se, NULL);
+	if (ret)
+		return ERR_PTR(ret);
+
+	se->icc_paths[GENI_TO_CORE].avg_bw = GENI_DEFAULT_BW;
+	se->icc_paths[CPU_TO_GENI].avg_bw = GENI_DEFAULT_BW;
+	ret = geni_icc_set_bw(se);
+	if (ret)
+		return ERR_PTR(ret);
+
+	se->clk = devm_clk_get(dev, "se");
+	if (IS_ERR(se->clk))
+		return ERR_CAST(se->clk);
+
+	se->core_clk = devm_clk_get_optional(dev, "core");
+	if (IS_ERR(se->core_clk))
+		return ERR_CAST(se->core_clk);
+
+	ret = devm_pm_opp_set_clkname(dev, "se");
+	if (ret)
+		return ERR_PTR(ret);
+
+	/* OPP table is optional */
+	ret = devm_pm_opp_of_add_table(dev);
+	if (ret && ret != -ENODEV) {
+		dev_err(dev, "invalid OPP table in device tree\n");
+		return ERR_PTR(ret);
+	}
+
+	return se;
+}
 
 MODULE_DESCRIPTION("GENI Serial Engine Driver");
 MODULE_LICENSE("GPL v2");

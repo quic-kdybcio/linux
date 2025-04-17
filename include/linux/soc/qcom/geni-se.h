@@ -7,6 +7,7 @@
 #define _LINUX_QCOM_GENI_SE
 
 #include <linux/interconnect.h>
+#include <linux/platform_device.h>
 
 /**
  * enum geni_se_xfer_mode: Transfer modes supported by Serial Engines
@@ -58,18 +59,22 @@ struct geni_icc_path {
  * @dev:		Pointer to the Serial Engine device
  * @wrapper:		Pointer to the parent QUP Wrapper core
  * @clk:		Handle to the core serial engine clock
+ * @core_clk:		Auxiliary clock, which may be required by a protocol
  * @num_clk_levels:	Number of valid clock levels in clk_perf_tbl
  * @clk_perf_tbl:	Table of clock frequency input to serial engine clock
  * @icc_paths:		Array of ICC paths for SE
+ * @irq:		Index of the interrupt line connected to this SE
  */
 struct geni_se {
 	void __iomem *base;
 	struct device *dev;
 	struct geni_wrapper *wrapper;
 	struct clk *clk;
+	struct clk *core_clk;
 	unsigned int num_clk_levels;
 	unsigned long *clk_perf_tbl;
 	struct geni_icc_path icc_paths[3];
+	int irq;
 };
 
 /* Common SE registers */
@@ -531,5 +536,7 @@ void geni_icc_set_tag(struct geni_se *se, u32 tag);
 int geni_icc_enable(struct geni_se *se);
 
 int geni_icc_disable(struct geni_se *se);
+
+struct geni_se *qcom_geni_alloc_se(struct platform_device *pdev);
 #endif
 #endif
