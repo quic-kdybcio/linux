@@ -5,6 +5,7 @@
 #define __DISABLE_TRACE_MMIO__
 
 #include <linux/acpi.h>
+#include <linux/auxiliary_bus.h>
 #include <linux/clk.h>
 #include <linux/slab.h>
 #include <linux/dma-mapping.h>
@@ -14,7 +15,11 @@
 #include <linux/of_platform.h>
 #include <linux/pinctrl/consumer.h>
 #include <linux/platform_device.h>
+#include <linux/pm_runtime.h>
 #include <linux/soc/qcom/geni-se.h>
+
+/* For automatically allocated device IDs */
+static DEFINE_IDA(geni_se_ida);
 
 /**
  * DOC: Overview
@@ -1022,5 +1027,102 @@ struct geni_se *qcom_geni_alloc_se(struct platform_device *pdev)
 	return se;
 }
 
-MODULE_DESCRIPTION("GENI Serial Engine Driver");
+MODULE_DESCRIPTION("GENI Serial Engine Wrapper Driver");
 MODULE_LICENSE("GPL v2");
+
+static void qcom_geni_aux_release(struct device *dev) {};
+static int qcom_geni_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct auxiliary_device *aux_dev;
+	struct geni_se *se;
+	u32 proto;
+	int ret;
+
+	se = qcom_geni_alloc_se(pdev);
+	if (!se)
+		return -ENOMEM;
+
+	dev_set_drvdata(dev, se);
+
+	ret = geni_se_resources_on(se);
+	if (ret)
+		return ret;
+
+	proto = geni_se_read_proto(se);
+
+	ret = geni_se_resources_off(se);
+	if (ret)
+		return ret;
+
+	if (proto == GENI_SE_NONE) {
+		/* TODO: Implement firmware loading */
+		dev_info(dev, "Serial Engine is uninitialized, turning it off\n");
+
+		return 0;
+	}
+
+	aux_dev = devm_kzalloc(dev, sizeof(*aux_dev), GFP_KERNEL);
+	if (!aux_dev)
+		return -ENOMEM;
+
+	/* Assign a unique device ID */
+	ret = ida_alloc(&geni_se_ida, GFP_KERNEL);
+	if (ret < 0)
+		return ret;
+	aux_dev->id = ret;
+
+	aux_dev->dev.parent = dev->parent;
+	aux_dev->dev.driver_data = se;
+	aux_dev->dev.release = qcom_geni_aux_release;
+	aux_dev->dev.dma_mask = dev->dma_mask;
+	aux_dev->dev.fwnode = dev->fwnode;
+	device_set_of_node_from_dev(&aux_dev->dev, dev);
+
+	switch (proto) {
+	case GENI_SE_SPI:
+	case GENI_SE_SPI_SLAVE:
+		aux_dev->name = "geni_spi";
+		break;
+	case GENI_SE_UART:
+		aux_dev->name = "geni_uart";
+		break;
+	case GENI_SE_I2C:
+		aux_dev->name = "geni_i2c";
+		break;
+	default:
+		return dev_err_probe(dev, -EINVAL, "Got unknown protocol ID %u\n", proto);
+	}
+
+	pm_runtime_set_suspended(dev);
+	pm_runtime_set_autosuspend_delay(dev, 500);
+	pm_runtime_use_autosuspend(dev);
+	pm_runtime_enable(dev);
+
+	ret = auxiliary_device_init(aux_dev);
+	if (ret)
+		return dev_err_probe(dev, ret, "aux device init failed\n");
+
+	ret = auxiliary_device_add(aux_dev);
+	if (ret) {
+		auxiliary_device_uninit(aux_dev);
+		return dev_err_probe(dev, ret, "aux device add failed\n");
+	}
+
+	return 0;
+}
+
+static const struct of_device_id qcom_geni_dt_match[] = {
+	{ .compatible = "qcom,geni" },
+	{ }
+};
+MODULE_DEVICE_TABLE(of, qcom_geni_dt_match);
+
+static struct platform_driver qcom_geni_driver = {
+	.driver = {
+		.name = "qcom_geni",
+		.of_match_table = qcom_geni_dt_match,
+	},
+	.probe = qcom_geni_probe,
+};
+module_platform_driver(qcom_geni_driver);
