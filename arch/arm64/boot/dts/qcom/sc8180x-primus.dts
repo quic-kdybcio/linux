@@ -612,6 +612,10 @@
 	status = "okay";
 };
 
+&spi3 {
+	status = "okay";
+};
+
 &uart12 {
 	compatible = "qcom,geni-debug-uart";
 	status = "okay";

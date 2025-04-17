@@ -898,7 +898,7 @@
 			status = "disabled";
 
 			i2c16: i2c@880000 {
-				compatible = "qcom,geni-i2c";
+				compatible = "qcom,geni";
 				reg = <0 0x00880000 0 0x4000>;
 				#address-cells = <1>;
 				#size-cells = <0>;
@@ -930,7 +930,7 @@
 			};
 
 			i2c17: i2c@884000 {
-				compatible = "qcom,geni-i2c";
+				compatible = "qcom,geni";
 				reg = <0 0x00884000 0 0x4000>;
 				#address-cells = <1>;
 				#size-cells = <0>;
@@ -976,7 +976,7 @@
 			};
 
 			i2c18: i2c@888000 {
-				compatible = "qcom,geni-i2c";
+				compatible = "qcom,geni";
 				reg = <0 0x00888000 0 0x4000>;
 				#address-cells = <1>;
 				#size-cells = <0>;
@@ -1026,7 +1026,7 @@
 			};
 
 			i2c19: i2c@88c000 {
-				compatible = "qcom,geni-i2c";
+				compatible = "qcom,geni";
 				reg = <0 0x0088c000 0 0x4000>;
 				#address-cells = <1>;
 				#size-cells = <0>;
@@ -1058,7 +1058,7 @@
 			};
 
 			i2c20: i2c@890000 {
-				compatible = "qcom,geni-i2c";
+				compatible = "qcom,geni";
 				reg = <0 0x00890000 0 0x4000>;
 				#address-cells = <1>;
 				#size-cells = <0>;
@@ -1090,7 +1090,7 @@
 			};
 
 			i2c21: i2c@894000 {
-				compatible = "qcom,geni-i2c";
+				compatible = "qcom,geni";
 				reg = <0 0x00894000 0 0x4000>;
 				clock-names = "se";
 				clocks = <&gcc GCC_QUPV3_WRAP2_S5_CLK>;
@@ -1122,7 +1122,7 @@
 			};
 
 			i2c22: i2c@898000 {
-				compatible = "qcom,geni-i2c";
+				compatible = "qcom,geni";
 				reg = <0 0x00898000 0 0x4000>;
 				#address-cells = <1>;
 				#size-cells = <0>;
@@ -1154,7 +1154,7 @@
 			};
 
 			i2c23: i2c@89c000 {
-				compatible = "qcom,geni-i2c";
+				compatible = "qcom,geni";
 				reg = <0 0x0089c000 0 0x4000>;
 				#address-cells = <1>;
 				#size-cells = <0>;
@@ -1201,7 +1201,7 @@
 			status = "disabled";
 
 			i2c0: i2c@980000 {
-				compatible = "qcom,geni-i2c";
+				compatible = "qcom,geni";
 				reg = <0 0x00980000 0 0x4000>;
 				#address-cells = <1>;
 				#size-cells = <0>;
@@ -1233,7 +1233,7 @@
 			};
 
 			i2c1: i2c@984000 {
-				compatible = "qcom,geni-i2c";
+				compatible = "qcom,geni";
 				reg = <0 0x00984000 0 0x4000>;
 				#address-cells = <1>;
 				#size-cells = <0>;
@@ -1265,7 +1265,7 @@
 			};
 
 			i2c2: i2c@988000 {
-				compatible = "qcom,geni-i2c";
+				compatible = "qcom,geni";
 				reg = <0 0x00988000 0 0x4000>;
 				#address-cells = <1>;
 				#size-cells = <0>;
@@ -1311,7 +1311,7 @@
 			};
 
 			i2c3: i2c@98c000 {
-				compatible = "qcom,geni-i2c";
+				compatible = "qcom,geni";
 				reg = <0 0x0098c000 0 0x4000>;
 				#address-cells = <1>;
 				#size-cells = <0>;
@@ -1343,7 +1343,7 @@
 			};
 
 			i2c4: i2c@990000 {
-				compatible = "qcom,geni-i2c";
+				compatible = "qcom,geni";
 				reg = <0 0x00990000 0 0x4000>;
 				clock-names = "se";
 				clocks = <&gcc GCC_QUPV3_WRAP0_S4_CLK>;
@@ -1375,7 +1375,7 @@
 			};
 
 			i2c5: i2c@994000 {
-				compatible = "qcom,geni-i2c";
+				compatible = "qcom,geni";
 				reg = <0 0x00994000 0 0x4000>;
 				#address-cells = <1>;
 				#size-cells = <0>;
@@ -1407,7 +1407,7 @@
 			};
 
 			i2c6: i2c@998000 {
-				compatible = "qcom,geni-i2c";
+				compatible = "qcom,geni";
 				reg = <0 0x00998000 0 0x4000>;
 				#address-cells = <1>;
 				#size-cells = <0>;
@@ -1439,7 +1439,7 @@
 			};
 
 			i2c7: i2c@99c000 {
-				compatible = "qcom,geni-i2c";
+				compatible = "qcom,geni";
 				reg = <0 0x0099c000 0 0x4000>;
 				#address-cells = <1>;
 				#size-cells = <0>;
@@ -1486,7 +1486,7 @@
 			status = "disabled";
 
 			i2c8: i2c@a80000 {
-				compatible = "qcom,geni-i2c";
+				compatible = "qcom,geni";
 				reg = <0 0x00a80000 0 0x4000>;
 				#address-cells = <1>;
 				#size-cells = <0>;
@@ -1518,7 +1518,7 @@
 			};
 
 			i2c9: i2c@a84000 {
-				compatible = "qcom,geni-i2c";
+				compatible = "qcom,geni";
 				reg = <0 0x00a84000 0 0x4000>;
 				#address-cells = <1>;
 				#size-cells = <0>;
@@ -1550,7 +1550,7 @@
 			};
 
 			i2c10: i2c@a88000 {
-				compatible = "qcom,geni-i2c";
+				compatible = "qcom,geni";
 				reg = <0 0x00a88000 0 0x4000>;
 				#address-cells = <1>;
 				#size-cells = <0>;
@@ -1582,7 +1582,7 @@
 			};
 
 			i2c11: i2c@a8c000 {
-				compatible = "qcom,geni-i2c";
+				compatible = "qcom,geni";
 				reg = <0 0x00a8c000 0 0x4000>;
 				#address-cells = <1>;
 				#size-cells = <0>;
@@ -1614,7 +1614,7 @@
 			};
 
 			i2c12: i2c@a90000 {
-				compatible = "qcom,geni-i2c";
+				compatible = "qcom,geni";
 				reg = <0 0x00a90000 0 0x4000>;
 				#address-cells = <1>;
 				#size-cells = <0>;
@@ -1646,7 +1646,7 @@
 			};
 
 			i2c13: i2c@a94000 {
-				compatible = "qcom,geni-i2c";
+				compatible = "qcom,geni";
 				reg = <0 0x00a94000 0 0x4000>;
 				#address-cells = <1>;
 				#size-cells = <0>;
@@ -1678,7 +1678,7 @@
 			};
 
 			i2c14: i2c@a98000 {
-				compatible = "qcom,geni-i2c";
+				compatible = "qcom,geni";
 				reg = <0 0x00a98000 0 0x4000>;
 				#address-cells = <1>;
 				#size-cells = <0>;
@@ -1710,7 +1710,7 @@
 			};
 
 			i2c15: i2c@a9c000 {
-				compatible = "qcom,geni-i2c";
+				compatible = "qcom,geni";
 				reg = <0 0x00a9c000 0 0x4000>;
 				#address-cells = <1>;
 				#size-cells = <0>;

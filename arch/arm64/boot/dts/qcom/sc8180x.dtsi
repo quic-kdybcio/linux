@@ -808,7 +808,7 @@
 			status = "disabled";
 
 			i2c0: i2c@880000 {
-				compatible = "qcom,geni-i2c";
+				compatible = "qcom,geni";
 				reg = <0 0x00880000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP0_S0_CLK>;
 				clock-names = "se";
@@ -823,7 +823,7 @@
 			};
 
 			spi0: spi@880000 {
-				compatible = "qcom,geni-spi";
+				compatible = "qcom,geni";
 				reg = <0 0x00880000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP0_S0_CLK>;
 				clock-names = "se";
@@ -837,7 +837,7 @@
 			};
 
 			uart0: serial@880000 {
-				compatible = "qcom,geni-uart";
+				compatible = "qcom,geni";
 				reg = <0 0x00880000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP0_S0_CLK>;
 				clock-names = "se";
@@ -849,7 +849,7 @@
 			};
 
 			i2c1: i2c@884000 {
-				compatible = "qcom,geni-i2c";
+				compatible = "qcom,geni";
 				reg = <0 0x00884000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP0_S1_CLK>;
 				clock-names = "se";
@@ -864,7 +864,7 @@
 			};
 
 			spi1: spi@884000 {
-				compatible = "qcom,geni-spi";
+				compatible = "qcom,geni";
 				reg = <0 0x00884000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP0_S1_CLK>;
 				clock-names = "se";
@@ -878,7 +878,7 @@
 			};
 
 			uart1: serial@884000 {
-				compatible = "qcom,geni-uart";
+				compatible = "qcom,geni";
 				reg = <0 0x00884000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP0_S1_CLK>;
 				clock-names = "se";
@@ -890,7 +890,7 @@
 			};
 
 			i2c2: i2c@888000 {
-				compatible = "qcom,geni-i2c";
+				compatible = "qcom,geni";
 				reg = <0 0x00888000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP0_S2_CLK>;
 				clock-names = "se";
@@ -905,7 +905,7 @@
 			};
 
 			spi2: spi@888000 {
-				compatible = "qcom,geni-spi";
+				compatible = "qcom,geni";
 				reg = <0 0x00888000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP0_S2_CLK>;
 				clock-names = "se";
@@ -919,7 +919,7 @@
 			};
 
 			uart2: serial@888000 {
-				compatible = "qcom,geni-uart";
+				compatible = "qcom,geni";
 				reg = <0 0x00888000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP0_S2_CLK>;
 				clock-names = "se";
@@ -931,7 +931,7 @@
 			};
 
 			i2c3: i2c@88c000 {
-				compatible = "qcom,geni-i2c";
+				compatible = "qcom,geni";
 				reg = <0 0x0088c000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP0_S3_CLK>;
 				clock-names = "se";
@@ -946,7 +946,7 @@
 			};
 
 			spi3: spi@88c000 {
-				compatible = "qcom,geni-spi";
+				compatible = "qcom,geni";
 				reg = <0 0x0088c000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP0_S3_CLK>;
 				clock-names = "se";
@@ -960,7 +960,7 @@
 			};
 
 			uart3: serial@88c000 {
-				compatible = "qcom,geni-uart";
+				compatible = "qcom,geni";
 				reg = <0 0x0088c000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP0_S3_CLK>;
 				clock-names = "se";
@@ -972,7 +972,7 @@
 			};
 
 			i2c4: i2c@890000 {
-				compatible = "qcom,geni-i2c";
+				compatible = "qcom,geni";
 				reg = <0 0x00890000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP0_S4_CLK>;
 				clock-names = "se";
@@ -987,7 +987,7 @@
 			};
 
 			spi4: spi@890000 {
-				compatible = "qcom,geni-spi";
+				compatible = "qcom,geni";
 				reg = <0 0x00890000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP0_S4_CLK>;
 				clock-names = "se";
@@ -1001,7 +1001,7 @@
 			};
 
 			uart4: serial@890000 {
-				compatible = "qcom,geni-uart";
+				compatible = "qcom,geni";
 				reg = <0 0x00890000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP0_S4_CLK>;
 				clock-names = "se";
@@ -1013,7 +1013,7 @@
 			};
 
 			i2c5: i2c@894000 {
-				compatible = "qcom,geni-i2c";
+				compatible = "qcom,geni";
 				reg = <0 0x00894000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP0_S5_CLK>;
 				clock-names = "se";
@@ -1028,7 +1028,7 @@
 			};
 
 			spi5: spi@894000 {
-				compatible = "qcom,geni-spi";
+				compatible = "qcom,geni";
 				reg = <0 0x00894000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP0_S5_CLK>;
 				clock-names = "se";
@@ -1042,7 +1042,7 @@
 			};
 
 			uart5: serial@894000 {
-				compatible = "qcom,geni-uart";
+				compatible = "qcom,geni";
 				reg = <0 0x00894000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP0_S5_CLK>;
 				clock-names = "se";
@@ -1054,7 +1054,7 @@
 			};
 
 			i2c6: i2c@898000 {
-				compatible = "qcom,geni-i2c";
+				compatible = "qcom,geni";
 				reg = <0 0x00898000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP0_S6_CLK>;
 				clock-names = "se";
@@ -1069,7 +1069,7 @@
 			};
 
 			spi6: spi@898000 {
-				compatible = "qcom,geni-spi";
+				compatible = "qcom,geni";
 				reg = <0 0x00898000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP0_S6_CLK>;
 				clock-names = "se";
@@ -1083,7 +1083,7 @@
 			};
 
 			uart6: serial@898000 {
-				compatible = "qcom,geni-uart";
+				compatible = "qcom,geni";
 				reg = <0 0x00898000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP0_S6_CLK>;
 				clock-names = "se";
@@ -1095,7 +1095,7 @@
 			};
 
 			i2c7: i2c@89c000 {
-				compatible = "qcom,geni-i2c";
+				compatible = "qcom,geni";
 				reg = <0 0x0089c000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP0_S7_CLK>;
 				clock-names = "se";
@@ -1110,7 +1110,7 @@
 			};
 
 			spi7: spi@89c000 {
-				compatible = "qcom,geni-spi";
+				compatible = "qcom,geni";
 				reg = <0 0x0089c000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP0_S7_CLK>;
 				clock-names = "se";
@@ -1124,7 +1124,7 @@
 			};
 
 			uart7: serial@89c000 {
-				compatible = "qcom,geni-uart";
+				compatible = "qcom,geni";
 				reg = <0 0x0089c000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP0_S7_CLK>;
 				clock-names = "se";
@@ -1149,7 +1149,7 @@
 			status = "disabled";
 
 			i2c8: i2c@a80000 {
-				compatible = "qcom,geni-i2c";
+				compatible = "qcom,geni";
 				reg = <0 0x00a80000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP1_S0_CLK>;
 				clock-names = "se";
@@ -1164,7 +1164,7 @@
 			};
 
 			spi8: spi@a80000 {
-				compatible = "qcom,geni-spi";
+				compatible = "qcom,geni";
 				reg = <0 0x00a80000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP1_S0_CLK>;
 				clock-names = "se";
@@ -1178,7 +1178,7 @@
 			};
 
 			uart8: serial@a80000 {
-				compatible = "qcom,geni-uart";
+				compatible = "qcom,geni";
 				reg = <0 0x00a80000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP1_S0_CLK>;
 				clock-names = "se";
@@ -1190,7 +1190,7 @@
 			};
 
 			i2c9: i2c@a84000 {
-				compatible = "qcom,geni-i2c";
+				compatible = "qcom,geni";
 				reg = <0 0x00a84000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP1_S1_CLK>;
 				clock-names = "se";
@@ -1205,7 +1205,7 @@
 			};
 
 			spi9: spi@a84000 {
-				compatible = "qcom,geni-spi";
+				compatible = "qcom,geni";
 				reg = <0 0x00a84000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP1_S1_CLK>;
 				clock-names = "se";
@@ -1231,7 +1231,7 @@
 			};
 
 			i2c10: i2c@a88000 {
-				compatible = "qcom,geni-i2c";
+				compatible = "qcom,geni";
 				reg = <0 0x00a88000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP1_S2_CLK>;
 				clock-names = "se";
@@ -1246,7 +1246,7 @@
 			};
 
 			spi10: spi@a88000 {
-				compatible = "qcom,geni-spi";
+				compatible = "qcom,geni";
 				reg = <0 0x00a88000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP1_S2_CLK>;
 				clock-names = "se";
@@ -1260,7 +1260,7 @@
 			};
 
 			uart10: serial@a88000 {
-				compatible = "qcom,geni-uart";
+				compatible = "qcom,geni";
 				reg = <0 0x00a88000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP1_S2_CLK>;
 				clock-names = "se";
@@ -1272,7 +1272,7 @@
 			};
 
 			i2c11: i2c@a8c000 {
-				compatible = "qcom,geni-i2c";
+				compatible = "qcom,geni";
 				reg = <0 0x00a8c000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP1_S3_CLK>;
 				clock-names = "se";
@@ -1287,7 +1287,7 @@
 			};
 
 			spi11: spi@a8c000 {
-				compatible = "qcom,geni-spi";
+				compatible = "qcom,geni";
 				reg = <0 0x00a8c000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP1_S3_CLK>;
 				clock-names = "se";
@@ -1301,7 +1301,7 @@
 			};
 
 			uart11: serial@a8c000 {
-				compatible = "qcom,geni-uart";
+				compatible = "qcom,geni";
 				reg = <0 0x00a8c000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP1_S3_CLK>;
 				clock-names = "se";
@@ -1313,7 +1313,7 @@
 			};
 
 			i2c12: i2c@a90000 {
-				compatible = "qcom,geni-i2c";
+				compatible = "qcom,geni";
 				reg = <0 0x00a90000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP1_S4_CLK>;
 				clock-names = "se";
@@ -1328,7 +1328,7 @@
 			};
 
 			spi12: spi@a90000 {
-				compatible = "qcom,geni-spi";
+				compatible = "qcom,geni";
 				reg = <0 0x00a90000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP1_S4_CLK>;
 				clock-names = "se";
@@ -1342,7 +1342,7 @@
 			};
 
 			uart12: serial@a90000 {
-				compatible = "qcom,geni-uart";
+				compatible = "qcom,geni";
 				reg = <0 0x00a90000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP1_S4_CLK>;
 				clock-names = "se";
@@ -1354,7 +1354,7 @@
 			};
 
 			i2c16: i2c@a94000 {
-				compatible = "qcom,geni-i2c";
+				compatible = "qcom,geni";
 				reg = <0 0x00a94000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP1_S5_CLK>;
 				clock-names = "se";
@@ -1369,7 +1369,7 @@
 			};
 
 			spi16: spi@a94000 {
-				compatible = "qcom,geni-spi";
+				compatible = "qcom,geni";
 				reg = <0 0x00a94000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP1_S5_CLK>;
 				clock-names = "se";
@@ -1383,7 +1383,7 @@
 			};
 
 			uart16: serial@a94000 {
-				compatible = "qcom,geni-uart";
+				compatible = "qcom,geni";
 				reg = <0 0x00a94000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP1_S5_CLK>;
 				clock-names = "se";
@@ -1408,7 +1408,7 @@
 			status = "disabled";
 
 			i2c17: i2c@c80000 {
-				compatible = "qcom,geni-i2c";
+				compatible = "qcom,geni";
 				reg = <0 0x00c80000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP2_S0_CLK>;
 				clock-names = "se";
@@ -1423,7 +1423,7 @@
 			};
 
 			spi17: spi@c80000 {
-				compatible = "qcom,geni-spi";
+				compatible = "qcom,geni";
 				reg = <0 0x00c80000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP2_S0_CLK>;
 				clock-names = "se";
@@ -1437,7 +1437,7 @@
 			};
 
 			uart17: serial@c80000 {
-				compatible = "qcom,geni-uart";
+				compatible = "qcom,geni";
 				reg = <0 0x00c80000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP2_S0_CLK>;
 				clock-names = "se";
@@ -1449,7 +1449,7 @@
 			};
 
 			i2c18: i2c@c84000 {
-				compatible = "qcom,geni-i2c";
+				compatible = "qcom,geni";
 				reg = <0 0x00c84000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP2_S1_CLK>;
 				clock-names = "se";
@@ -1464,7 +1464,7 @@
 			};
 
 			spi18: spi@c84000 {
-				compatible = "qcom,geni-spi";
+				compatible = "qcom,geni";
 				reg = <0 0x00c84000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP2_S1_CLK>;
 				clock-names = "se";
@@ -1478,7 +1478,7 @@
 			};
 
 			uart18: serial@c84000 {
-				compatible = "qcom,geni-uart";
+				compatible = "qcom,geni";
 				reg = <0 0x00c84000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP2_S1_CLK>;
 				clock-names = "se";
@@ -1490,7 +1490,7 @@
 			};
 
 			i2c19: i2c@c88000 {
-				compatible = "qcom,geni-i2c";
+				compatible = "qcom,geni";
 				reg = <0 0x00c88000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP2_S2_CLK>;
 				clock-names = "se";
@@ -1505,7 +1505,7 @@
 			};
 
 			spi19: spi@c88000 {
-				compatible = "qcom,geni-spi";
+				compatible = "qcom,geni";
 				reg = <0 0x00c88000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP2_S2_CLK>;
 				clock-names = "se";
@@ -1519,7 +1519,7 @@
 			};
 
 			uart19: serial@c88000 {
-				compatible = "qcom,geni-uart";
+				compatible = "qcom,geni";
 				reg = <0 0x00c88000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP2_S2_CLK>;
 				clock-names = "se";
@@ -1531,7 +1531,7 @@
 			};
 
 			i2c13: i2c@c8c000 {
-				compatible = "qcom,geni-i2c";
+				compatible = "qcom,geni";
 				reg = <0 0x00c8c000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP2_S3_CLK>;
 				clock-names = "se";
@@ -1546,7 +1546,7 @@
 			};
 
 			spi13: spi@c8c000 {
-				compatible = "qcom,geni-spi";
+				compatible = "qcom,geni";
 				reg = <0 0x00c8c000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP2_S3_CLK>;
 				clock-names = "se";
@@ -1560,7 +1560,7 @@
 			};
 
 			uart13: serial@c8c000 {
-				compatible = "qcom,geni-uart";
+				compatible = "qcom,geni";
 				reg = <0 0x00c8c000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP2_S3_CLK>;
 				clock-names = "se";
@@ -1572,7 +1572,7 @@
 			};
 
 			i2c14: i2c@c90000 {
-				compatible = "qcom,geni-i2c";
+				compatible = "qcom,geni";
 				reg = <0 0x00c90000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP2_S4_CLK>;
 				clock-names = "se";
@@ -1587,7 +1587,7 @@
 			};
 
 			spi14: spi@c90000 {
-				compatible = "qcom,geni-spi";
+				compatible = "qcom,geni";
 				reg = <0 0x00c90000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP2_S4_CLK>;
 				clock-names = "se";
@@ -1601,7 +1601,7 @@
 			};
 
 			uart14: serial@c90000 {
-				compatible = "qcom,geni-uart";
+				compatible = "qcom,geni";
 				reg = <0 0x00c90000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP2_S4_CLK>;
 				clock-names = "se";
@@ -1613,7 +1613,7 @@
 			};
 
 			i2c15: i2c@c94000 {
-				compatible = "qcom,geni-i2c";
+				compatible = "qcom,geni";
 				reg = <0 0x00c94000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP2_S5_CLK>;
 				clock-names = "se";
@@ -1628,7 +1628,7 @@
 			};
 
 			spi15: spi@c94000 {
-				compatible = "qcom,geni-spi";
+				compatible = "qcom,geni";
 				reg = <0 0x00c94000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP2_S5_CLK>;
 				clock-names = "se";
@@ -1642,7 +1642,7 @@
 			};
 
 			uart15: serial@c94000 {
-				compatible = "qcom,geni-uart";
+				compatible = "qcom,geni";
 				reg = <0 0x00c94000 0 0x4000>;
 				clocks = <&gcc GCC_QUPV3_WRAP2_S5_CLK>;
 				clock-names = "se";
