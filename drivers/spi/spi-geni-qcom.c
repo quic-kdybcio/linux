@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2017-2018, The Linux foundation. All rights reserved.
 
+#include <linux/auxiliary_bus.h>
 #include <linux/clk.h>
 #include <linux/dmaengine.h>
 #include <linux/dma-mapping.h>
@@ -1048,11 +1049,10 @@ static irqreturn_t geni_spi_isr(int irq, void *data)
 	return IRQ_HANDLED;
 }
 
-static int spi_geni_probe(struct platform_device *pdev)
+static int spi_geni_probe_common(struct device *dev, struct geni_se *se)
 {
 	struct spi_controller *spi;
 	struct spi_geni_master *mas;
-	struct device *dev = &pdev->dev;
 	int ret;
 
 	ret = dma_set_mask_and_coherent(dev, DMA_BIT_MASK(64));
@@ -1065,7 +1065,7 @@ static int spi_geni_probe(struct platform_device *pdev)
 	mas = spi_controller_get_devdata(spi);
 	mas->dev = dev;
 
-	mas->se = qcom_geni_alloc_se(pdev);
+	mas->se = se;
 	if (!mas->se)
 		return -EINVAL;
 
@@ -1105,13 +1105,7 @@ static int spi_geni_probe(struct platform_device *pdev)
 	init_completion(&mas->rx_reset_done);
 	spin_lock_init(&mas->lock);
 
-	pm_runtime_use_autosuspend(mas->se->dev);
-	pm_runtime_set_autosuspend_delay(mas->se->dev, 250);
-	ret = devm_pm_runtime_enable(mas->se->dev);
-	if (ret)
-		return ret;
-
-	if (device_property_read_bool(&pdev->dev, "spi-slave"))
+	if (device_property_read_bool(dev, "spi-slave"))
 		spi->target = true;
 
 	/* Set the bus quota to a reasonable value for register access */
@@ -1145,20 +1139,34 @@ static int spi_geni_probe(struct platform_device *pdev)
 	return devm_spi_register_controller(dev, spi);
 }
 
+static int spi_geni_probe(struct platform_device *pdev)
+{
+	struct spi_geni_master *mas;
+	int ret;
+
+	ret = spi_geni_probe_common(&pdev->dev, qcom_geni_alloc_se(pdev));
+	if (!ret) {
+		mas = platform_get_drvdata(pdev);
+		if (!mas)
+			return -EINVAL;
+
+		pm_runtime_use_autosuspend(mas->se->dev);
+		pm_runtime_set_autosuspend_delay(mas->se->dev, 250);
+		ret = devm_pm_runtime_enable(mas->se->dev);
+	}
+
+	return ret;
+}
+
 static int __maybe_unused spi_geni_runtime_suspend(struct device *dev)
 {
 	struct spi_controller *spi = dev_get_drvdata(dev);
 	struct spi_geni_master *mas = spi_controller_get_devdata(spi);
-	int ret;
 
 	/* Drop the performance state vote */
 	dev_pm_opp_set_rate(dev, 0);
 
-	ret = geni_se_resources_off(mas->se);
-	if (ret)
-		return ret;
-
-	return geni_icc_disable(mas->se);
+	return pm_runtime_put_sync(mas->se->dev);
 }
 
 static int __maybe_unused spi_geni_runtime_resume(struct device *dev)
@@ -1167,7 +1175,7 @@ static int __maybe_unused spi_geni_runtime_resume(struct device *dev)
 	struct spi_geni_master *mas = spi_controller_get_devdata(spi);
 	int ret;
 
-	ret = geni_se_resources_on(mas->se);
+	ret = pm_runtime_get_sync(mas->se->dev);
 	if (ret)
 		return ret;
 
@@ -1219,6 +1227,28 @@ static const struct of_device_id spi_geni_dt_match[] = {
 	{}
 };
 MODULE_DEVICE_TABLE(of, spi_geni_dt_match);
+
+static int geni_spi_aux_probe(struct auxiliary_device *auxdev,
+			      const struct auxiliary_device_id *id)
+{
+	struct device *dev = &auxdev->dev;
+
+	return spi_geni_probe_common(dev, dev_get_drvdata(dev));
+}
+
+static const struct auxiliary_device_id geni_spi_devtype_aux[] = {
+	{ .name = "qcom_geni_se.geni_spi" },
+	{}
+};
+MODULE_DEVICE_TABLE(auxiliary, geni_spi_devtype_aux);
+
+static struct auxiliary_driver geni_spi_driver_aux = {
+	.name = "geni_spi_aux",
+	.id_table = geni_spi_devtype_aux,
+	.probe = geni_spi_aux_probe,
+	.driver.pm = &spi_geni_pm_ops,
+};
+module_auxiliary_driver(geni_spi_driver_aux);
 
 static struct platform_driver spi_geni_driver = {
 	.probe  = spi_geni_probe,
