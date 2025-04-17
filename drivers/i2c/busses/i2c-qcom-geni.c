@@ -990,10 +990,10 @@ static int __maybe_unused geni_i2c_suspend_noirq(struct device *dev)
 	i2c_mark_adapter_suspended(&gi2c->adap);
 
 	if (!gi2c->suspended) {
-		geni_i2c_runtime_suspend(dev);
-		pm_runtime_disable(dev);
-		pm_runtime_set_suspended(dev);
-		pm_runtime_enable(dev);
+		geni_i2c_runtime_suspend(gi2c->se->dev);
+		pm_runtime_disable(gi2c->se->dev);
+		pm_runtime_set_suspended(gi2c->se->dev);
+		pm_runtime_enable(gi2c->se->dev);
 	}
 	return 0;
 }
