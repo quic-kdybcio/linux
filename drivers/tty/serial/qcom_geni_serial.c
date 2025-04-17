@@ -192,24 +192,10 @@ static struct qcom_geni_serial_port qcom_geni_console_port = {
 	},
 };
 
-static int qcom_geni_serial_request_port(struct uart_port *uport)
-{
-	struct platform_device *pdev = to_platform_device(uport->dev);
-	struct qcom_geni_serial_port *port = to_dev_port(uport);
-
-	uport->membase = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(uport->membase))
-		return PTR_ERR(uport->membase);
-	port->se->base = uport->membase;
-	return 0;
-}
-
 static void qcom_geni_serial_config_port(struct uart_port *uport, int cfg_flags)
 {
-	if (cfg_flags & UART_CONFIG_TYPE) {
+	if (cfg_flags & UART_CONFIG_TYPE)
 		uport->type = PORT_MSM;
-		qcom_geni_serial_request_port(uport);
-	}
 }
 
 static unsigned int qcom_geni_serial_get_mctrl(struct uart_port *uport)
@@ -1616,7 +1602,6 @@ static const struct uart_ops qcom_geni_console_pops = {
 	.start_rx = qcom_geni_serial_start_rx_fifo,
 	.set_termios = qcom_geni_serial_set_termios,
 	.startup = qcom_geni_serial_startup,
-	.request_port = qcom_geni_serial_request_port,
 	.config_port = qcom_geni_serial_config_port,
 	.shutdown = qcom_geni_serial_shutdown,
 	.flush_buffer = qcom_geni_serial_flush_buffer,
@@ -1639,7 +1624,6 @@ static const struct uart_ops qcom_geni_uart_pops = {
 	.stop_rx = qcom_geni_serial_stop_rx_dma,
 	.set_termios = qcom_geni_serial_set_termios,
 	.startup = qcom_geni_serial_startup,
-	.request_port = qcom_geni_serial_request_port,
 	.config_port = qcom_geni_serial_config_port,
 	.shutdown = qcom_geni_serial_shutdown,
 	.type = qcom_geni_serial_get_type,
@@ -1655,7 +1639,6 @@ static int qcom_geni_serial_probe(struct platform_device *pdev)
 	struct qcom_geni_serial_port *port;
 	struct uart_port *uport;
 	struct resource *res;
-	int irq;
 	struct uart_driver *drv;
 	const struct qcom_geni_device_data *data;
 
@@ -1687,18 +1670,10 @@ static int qcom_geni_serial_probe(struct platform_device *pdev)
 	uport->dev = &pdev->dev;
 	port->dev_data = data;
 
-	port->se = devm_kzalloc(&pdev->dev, sizeof(*port->se), GFP_KERNEL);
-	if (!port->se)
-		return -ENOMEM;
-
-	port->se->dev = &pdev->dev;
-	port->se->wrapper = dev_get_drvdata(pdev->dev.parent);
-	port->se->clk = devm_clk_get(&pdev->dev, "se");
-	if (IS_ERR(port->se->clk)) {
-		ret = PTR_ERR(port->se->clk);
-		dev_err(&pdev->dev, "Err getting SE Core clk %d\n", ret);
-		return ret;
-	}
+	port->se = qcom_geni_alloc_se(pdev);
+	if (IS_ERR(port->se))
+		return PTR_ERR(port->se);
+	uport->membase = port->se->base;
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	if (!res)
@@ -1716,24 +1691,13 @@ static int qcom_geni_serial_probe(struct platform_device *pdev)
 			return -ENOMEM;
 	}
 
-	ret = geni_icc_get(port->se, NULL);
-	if (ret)
-		return ret;
-
-	ret = geni_icc_set_bw_ab(port->se, GENI_DEFAULT_BW, GENI_DEFAULT_BW, 0);
-	if (ret)
-		return ret;
-
 	port->name = devm_kasprintf(uport->dev, GFP_KERNEL,
 			"qcom_geni_serial_%s%d",
 			uart_console(uport) ? "console" : "uart", uport->line);
 	if (!port->name)
 		return -ENOMEM;
 
-	irq = platform_get_irq(pdev, 0);
-	if (irq < 0)
-		return irq;
-	uport->irq = irq;
+	uport->irq = port->se->irq;
 	uport->has_sysrq = IS_ENABLED(CONFIG_SERIAL_QCOM_GENI_CONSOLE);
 
 	if (!data->console)
