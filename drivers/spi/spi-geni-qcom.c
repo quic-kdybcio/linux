@@ -297,7 +297,7 @@ static void spi_geni_set_cs(struct spi_device *slv, bool set_flag)
 	if (set_flag == mas->cs_flag)
 		return;
 
-	pm_runtime_get_sync(mas->dev);
+	pm_runtime_get_sync(se->dev);
 
 	if (spi_geni_is_abort_still_pending(mas)) {
 		dev_err(mas->dev, "Can't set chip select\n");
@@ -330,7 +330,7 @@ static void spi_geni_set_cs(struct spi_device *slv, bool set_flag)
 	}
 
 exit:
-	pm_runtime_put(mas->dev);
+	pm_runtime_put(se->dev);
 }
 
 static void spi_setup_word_len(struct spi_geni_master *mas, u16 mode,
@@ -662,7 +662,7 @@ static int spi_geni_init(struct spi_geni_master *mas)
 	u32 spi_tx_cfg, fifo_disable;
 	int ret = -ENXIO;
 
-	pm_runtime_get_sync(mas->dev);
+	pm_runtime_get_sync(se->dev);
 
 	proto = geni_se_read_proto(se);
 
@@ -731,7 +731,7 @@ static int spi_geni_init(struct spi_geni_master *mas)
 	}
 
 out_pm:
-	pm_runtime_put(mas->dev);
+	pm_runtime_put(se->dev);
 	return ret;
 }
 
@@ -1122,9 +1122,9 @@ static int spi_geni_probe(struct platform_device *pdev)
 	if (ret)
 		return ret;
 
-	pm_runtime_use_autosuspend(&pdev->dev);
-	pm_runtime_set_autosuspend_delay(&pdev->dev, 250);
-	ret = devm_pm_runtime_enable(dev);
+	pm_runtime_use_autosuspend(mas->se->dev);
+	pm_runtime_set_autosuspend_delay(mas->se->dev, 250);
+	ret = devm_pm_runtime_enable(mas->se->dev);
 	if (ret)
 		return ret;
 
@@ -1199,13 +1199,14 @@ static int __maybe_unused spi_geni_runtime_resume(struct device *dev)
 static int __maybe_unused spi_geni_suspend(struct device *dev)
 {
 	struct spi_controller *spi = dev_get_drvdata(dev);
+	struct spi_geni_master *mas = spi_controller_get_devdata(spi);
 	int ret;
 
 	ret = spi_controller_suspend(spi);
 	if (ret)
 		return ret;
 
-	ret = pm_runtime_force_suspend(dev);
+	ret = pm_runtime_force_suspend(mas->se->dev);
 	if (ret)
 		spi_controller_resume(spi);
 
@@ -1215,9 +1216,10 @@ static int __maybe_unused spi_geni_suspend(struct device *dev)
 static int __maybe_unused spi_geni_resume(struct device *dev)
 {
 	struct spi_controller *spi = dev_get_drvdata(dev);
+	struct spi_geni_master *mas = spi_controller_get_devdata(spi);
 	int ret;
 
-	ret = pm_runtime_force_resume(dev);
+	ret = pm_runtime_force_resume(mas->se->dev);
 	if (ret)
 		return ret;
 
