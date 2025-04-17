@@ -76,7 +76,7 @@
 #define GSI_CPOL		BIT(5)
 
 struct spi_geni_master {
-	struct geni_se se;
+	struct geni_se *se;
 	struct device *dev;
 	u32 tx_fifo_depth;
 	u32 fifo_width_bits;
@@ -105,7 +105,7 @@ struct spi_geni_master {
 
 static void spi_slv_setup(struct spi_geni_master *mas)
 {
-	struct geni_se *se = &mas->se;
+	struct geni_se *se = mas->se;
 
 	writel(SPI_SLAVE_EN, se->base + SE_SPI_SLAVE_EN);
 	writel(GENI_IO_MUX_0_EN, se->base + GENI_OUTPUT_CTRL);
@@ -122,7 +122,7 @@ static int get_spi_clk_cfg(unsigned int speed_hz,
 	unsigned int actual_hz;
 	int ret;
 
-	ret = geni_se_clk_freq_match(&mas->se,
+	ret = geni_se_clk_freq_match(mas->se,
 				speed_hz * mas->oversampling,
 				clk_idx, &sclk_freq, false);
 	if (ret) {
@@ -150,7 +150,7 @@ static void handle_se_timeout(struct spi_controller *spi,
 {
 	struct spi_geni_master *mas = spi_controller_get_devdata(spi);
 	unsigned long time_left;
-	struct geni_se *se = &mas->se;
+	struct geni_se *se = mas->se;
 	const struct spi_transfer *xfer;
 
 	spin_lock_irq(&mas->lock);
@@ -252,7 +252,7 @@ static void spi_geni_handle_err(struct spi_controller *spi, struct spi_message *
 
 static bool spi_geni_is_abort_still_pending(struct spi_geni_master *mas)
 {
-	struct geni_se *se = &mas->se;
+	struct geni_se *se = mas->se;
 	u32 m_irq, m_irq_en;
 
 	if (!mas->abort_failed)
@@ -288,7 +288,7 @@ static void spi_geni_set_cs(struct spi_device *slv, bool set_flag)
 {
 	struct spi_geni_master *mas = spi_controller_get_devdata(slv->controller);
 	struct spi_controller *spi = dev_get_drvdata(mas->dev);
-	struct geni_se *se = &mas->se;
+	struct geni_se *se = mas->se;
 	unsigned long time_left;
 
 	if (!(slv->mode & SPI_CS_HIGH))
@@ -338,7 +338,7 @@ static void spi_setup_word_len(struct spi_geni_master *mas, u16 mode,
 {
 	unsigned int pack_words;
 	bool msb_first = (mode & SPI_LSB_FIRST) ? false : true;
-	struct geni_se *se = &mas->se;
+	struct geni_se *se = mas->se;
 	u32 word_len;
 
 	/*
@@ -349,8 +349,8 @@ static void spi_setup_word_len(struct spi_geni_master *mas, u16 mode,
 		pack_words = mas->fifo_width_bits / bits_per_word;
 	else
 		pack_words = 1;
-	geni_se_config_packing(&mas->se, bits_per_word, pack_words, msb_first,
-								true, true);
+	geni_se_config_packing(mas->se, bits_per_word, pack_words, msb_first,
+			       true, true);
 	word_len = (bits_per_word - MIN_WORD_LEN) & WORD_LEN_MSK;
 	writel(word_len, se->base + SE_SPI_WORD_LEN);
 }
@@ -359,7 +359,7 @@ static int geni_spi_set_clock_and_bw(struct spi_geni_master *mas,
 					unsigned long clk_hz)
 {
 	u32 clk_sel, m_clk_cfg, idx, div;
-	struct geni_se *se = &mas->se;
+	struct geni_se *se = mas->se;
 	int ret;
 
 	if (clk_hz == mas->cur_speed_hz)
@@ -399,7 +399,7 @@ static int setup_fifo_params(struct spi_device *spi_slv,
 					struct spi_controller *spi)
 {
 	struct spi_geni_master *mas = spi_controller_get_devdata(spi);
-	struct geni_se *se = &mas->se;
+	struct geni_se *se = mas->se;
 	u32 loopback_cfg = 0, cpol = 0, cpha = 0, demux_output_inv = 0;
 	u32 demux_sel;
 
@@ -657,7 +657,7 @@ err_tx:
 static int spi_geni_init(struct spi_geni_master *mas)
 {
 	struct spi_controller *spi = dev_get_drvdata(mas->dev);
-	struct geni_se *se = &mas->se;
+	struct geni_se *se = mas->se;
 	unsigned int proto, major, minor, ver;
 	u32 spi_tx_cfg, fifo_disable;
 	int ret = -ENXIO;
@@ -751,7 +751,7 @@ static unsigned int geni_byte_per_fifo_word(struct spi_geni_master *mas)
 
 static bool geni_spi_handle_tx(struct spi_geni_master *mas)
 {
-	struct geni_se *se = &mas->se;
+	struct geni_se *se = mas->se;
 	unsigned int max_bytes;
 	const u8 *tx_buf;
 	unsigned int bytes_per_fifo_word = geni_byte_per_fifo_word(mas);
@@ -789,7 +789,7 @@ static bool geni_spi_handle_tx(struct spi_geni_master *mas)
 
 static void geni_spi_handle_rx(struct spi_geni_master *mas)
 {
-	struct geni_se *se = &mas->se;
+	struct geni_se *se = mas->se;
 	u32 rx_fifo_status;
 	unsigned int rx_bytes;
 	unsigned int rx_last_byte_valid;
@@ -837,7 +837,7 @@ static int setup_se_xfer(struct spi_transfer *xfer,
 {
 	u32 m_cmd = 0;
 	u32 len;
-	struct geni_se *se = &mas->se;
+	struct geni_se *se = mas->se;
 	int ret;
 
 	/*
@@ -950,7 +950,7 @@ static irqreturn_t geni_spi_isr(int irq, void *data)
 {
 	struct spi_controller *spi = data;
 	struct spi_geni_master *mas = spi_controller_get_devdata(spi);
-	struct geni_se *se = &mas->se;
+	struct geni_se *se = mas->se;
 	u32 m_irq;
 
 	m_irq = readl(se->base + SE_GENI_M_IRQ_STATUS);
@@ -1081,10 +1081,10 @@ static int spi_geni_probe(struct platform_device *pdev)
 	mas = spi_controller_get_devdata(spi);
 	mas->irq = irq;
 	mas->dev = dev;
-	mas->se.dev = dev;
-	mas->se.wrapper = dev_get_drvdata(dev->parent);
-	mas->se.base = base;
-	mas->se.clk = clk;
+	mas->se->dev = dev;
+	mas->se->wrapper = dev_get_drvdata(dev->parent);
+	mas->se->base = base;
+	mas->se->clk = clk;
 
 	ret = devm_pm_opp_set_clkname(&pdev->dev, "se");
 	if (ret)
@@ -1118,7 +1118,7 @@ static int spi_geni_probe(struct platform_device *pdev)
 	init_completion(&mas->rx_reset_done);
 	spin_lock_init(&mas->lock);
 
-	ret = geni_icc_get(&mas->se, NULL);
+	ret = geni_icc_get(mas->se, NULL);
 	if (ret)
 		return ret;
 
@@ -1132,7 +1132,7 @@ static int spi_geni_probe(struct platform_device *pdev)
 		spi->target = true;
 
 	/* Set the bus quota to a reasonable value for register access */
-	ret = geni_icc_set_bw_ab(&mas->se,
+	ret = geni_icc_set_bw_ab(mas->se,
 				 Bps_to_icc(CORE_2X_50_MHZ),
 				 GENI_DEFAULT_BW, 0);
 	if (ret)
@@ -1172,11 +1172,11 @@ static int __maybe_unused spi_geni_runtime_suspend(struct device *dev)
 	/* Drop the performance state vote */
 	dev_pm_opp_set_rate(dev, 0);
 
-	ret = geni_se_resources_off(&mas->se);
+	ret = geni_se_resources_off(mas->se);
 	if (ret)
 		return ret;
 
-	return geni_icc_disable(&mas->se);
+	return geni_icc_disable(mas->se);
 }
 
 static int __maybe_unused spi_geni_runtime_resume(struct device *dev)
@@ -1185,11 +1185,11 @@ static int __maybe_unused spi_geni_runtime_resume(struct device *dev)
 	struct spi_geni_master *mas = spi_controller_get_devdata(spi);
 	int ret;
 
-	ret = geni_icc_enable(&mas->se);
+	ret = geni_icc_enable(mas->se);
 	if (ret)
 		return ret;
 
-	ret = geni_se_resources_on(&mas->se);
+	ret = geni_se_resources_on(mas->se);
 	if (ret)
 		return ret;
 
