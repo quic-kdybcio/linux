@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2017-2018, The Linux foundation. All rights reserved.
 
-#include <linux/clk.h>
 #include <linux/dmaengine.h>
 #include <linux/dma-mapping.h>
 #include <linux/dma/qcom-gpi-dma.h>
@@ -95,7 +94,6 @@ struct spi_geni_master {
 	struct completion rx_reset_done;
 	unsigned int oversampling;
 	spinlock_t lock;
-	int irq;
 	bool cs_flag;
 	bool abort_failed;
 	struct dma_chan *tx;
@@ -1050,56 +1048,26 @@ static irqreturn_t geni_spi_isr(int irq, void *data)
 
 static int spi_geni_probe(struct platform_device *pdev)
 {
-	int ret, irq;
 	struct spi_controller *spi;
 	struct spi_geni_master *mas;
-	void __iomem *base;
-	struct clk *clk;
 	struct device *dev = &pdev->dev;
-
-	irq = platform_get_irq(pdev, 0);
-	if (irq < 0)
-		return irq;
+	int ret;
 
 	ret = dma_set_mask_and_coherent(dev, DMA_BIT_MASK(64));
 	if (ret)
 		return dev_err_probe(dev, ret, "could not set DMA mask\n");
 
-	base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(base))
-		return PTR_ERR(base);
-
-	clk = devm_clk_get(dev, "se");
-	if (IS_ERR(clk))
-		return PTR_ERR(clk);
-
 	spi = devm_spi_alloc_host(dev, sizeof(*mas));
 	if (!spi)
 		return -ENOMEM;
-
-	platform_set_drvdata(pdev, spi);
 	mas = spi_controller_get_devdata(spi);
-	mas->irq = irq;
 	mas->dev = dev;
 
-	mas->se = devm_kzalloc(dev, sizeof(*(mas->se)), GFP_KERNEL);
+	mas->se = qcom_geni_alloc_se(pdev);
 	if (!mas->se)
-		return -ENOMEM;
+		return -EINVAL;
 
-	mas->se->dev = dev;
-	mas->se->wrapper = dev_get_drvdata(dev->parent);
-	mas->se->base = base;
-	mas->se->clk = clk;
-
-	ret = devm_pm_opp_set_clkname(&pdev->dev, "se");
-	if (ret)
-		return ret;
-	/* OPP table is optional */
-	ret = devm_pm_opp_of_add_table(&pdev->dev);
-	if (ret && ret != -ENODEV) {
-		dev_err(&pdev->dev, "invalid OPP table in device tree\n");
-		return ret;
-	}
+	dev_set_drvdata(dev, spi);
 
 	spi->bus_num = -1;
 	spi->dev.of_node = dev->of_node;
@@ -1123,10 +1091,6 @@ static int spi_geni_probe(struct platform_device *pdev)
 	init_completion(&mas->rx_reset_done);
 	spin_lock_init(&mas->lock);
 
-	ret = geni_icc_get(mas->se, NULL);
-	if (ret)
-		return ret;
-
 	pm_runtime_use_autosuspend(mas->se->dev);
 	pm_runtime_set_autosuspend_delay(mas->se->dev, 250);
 	ret = devm_pm_runtime_enable(mas->se->dev);
@@ -1143,10 +1107,13 @@ static int spi_geni_probe(struct platform_device *pdev)
 	if (ret)
 		return ret;
 
-	ret = spi_geni_init(mas);
+	ret = devm_request_irq(dev, mas->se->irq, geni_spi_isr, IRQF_NO_AUTOEN, dev_name(dev), spi);
 	if (ret)
 		return ret;
 
+	ret = spi_geni_init(mas);
+	if (ret)
+		return ret;
 	/*
 	 * check the mode supported and set_cs for fifo mode only
 	 * for dma (gsi) mode, the gsi will set cs based on params passed in
@@ -1160,10 +1127,6 @@ static int spi_geni_probe(struct platform_device *pdev)
 	 */
 	if (mas->cur_xfer_mode == GENI_GPI_DMA)
 		spi->flags = SPI_CONTROLLER_MUST_TX;
-
-	ret = devm_request_irq(dev, mas->irq, geni_spi_isr, 0, dev_name(dev), spi);
-	if (ret)
-		return ret;
 
 	return devm_spi_register_controller(dev, spi);
 }
