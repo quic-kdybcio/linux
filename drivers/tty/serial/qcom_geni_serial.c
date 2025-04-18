@@ -1633,8 +1633,11 @@ static const struct uart_ops qcom_geni_uart_pops = {
 	.pm = qcom_geni_serial_pm,
 };
 
-static int qcom_geni_serial_probe_common(struct device *dev, struct geni_se *se)
+static int qcom_geni_serial_probe(struct auxiliary_device *auxdev,
+				  const struct auxiliary_device_id *id)
 {
+	struct device *dev = &auxdev->dev;
+	struct geni_se *se;
 	int ret = 0;
 	int line;
 	struct qcom_geni_serial_port *port;
@@ -1643,8 +1646,11 @@ static int qcom_geni_serial_probe_common(struct device *dev, struct geni_se *se)
 	struct uart_driver *drv;
 	bool is_console;
 
-	is_console = !!of_device_get_match_data(se->dev);
+	se = dev_get_drvdata(dev);
+	if (IS_ERR(se))
+		return PTR_ERR(se);
 
+	is_console = !!of_device_get_match_data(se->dev);
 	if (is_console) {
 		drv = &qcom_geni_console_driver;
 		line = of_alias_get_id(se->dev->of_node, "serial");
@@ -1670,8 +1676,7 @@ static int qcom_geni_serial_probe_common(struct device *dev, struct geni_se *se)
 	port->is_console = is_console;
 
 	port->se = se;
-	if (IS_ERR(port->se))
-		return PTR_ERR(port->se);
+
 	uport->membase = port->se->base;
 
 	res = platform_get_resource(to_platform_device(se->dev), IORESOURCE_MEM, 0);
@@ -1749,18 +1754,6 @@ static int qcom_geni_serial_probe_common(struct device *dev, struct geni_se *se)
 	return 0;
 }
 
-static void qcom_geni_serial_remove(struct platform_device *pdev)
-{
-	struct qcom_geni_serial_port *port = platform_get_drvdata(pdev);
-	struct uart_port *uport = &port->uport;
-	struct uart_driver *drv = port->private_data.drv;
-
-	dev_pm_clear_wake_irq(&pdev->dev);
-	device_init_wakeup(&pdev->dev, false);
-	ida_free(&port_ida, uport->line);
-	uart_remove_one_port(drv, &port->uport);
-}
-
 static int qcom_geni_serial_suspend(struct device *dev)
 {
 	struct qcom_geni_serial_port *port = dev_get_drvdata(dev);
@@ -1795,48 +1788,13 @@ static const struct dev_pm_ops qcom_geni_serial_pm_ops = {
 	SYSTEM_SLEEP_PM_OPS(qcom_geni_serial_suspend, qcom_geni_serial_resume)
 };
 
-static const struct of_device_id qcom_geni_serial_match_table[] = {
-	{
-		.compatible = "qcom,geni-debug-uart",
-		.data = (void *)true,
-	},
-	{
-		.compatible = "qcom,geni-uart",
-	},
-	{}
-};
-MODULE_DEVICE_TABLE(of, qcom_geni_serial_match_table);
-
-static int qcom_geni_serial_probe(struct platform_device *pdev)
-{
-	return qcom_geni_serial_probe_common(&pdev->dev, qcom_geni_alloc_se(pdev));
-}
-
-static struct platform_driver qcom_geni_serial_platform_driver = {
-	.remove = qcom_geni_serial_remove,
-	.probe = qcom_geni_serial_probe,
-	.driver = {
-		.name = "qcom_geni_serial",
-		.of_match_table = qcom_geni_serial_match_table,
-		.pm = &qcom_geni_serial_pm_ops,
-	},
-};
-
 static const struct auxiliary_device_id geni_uart_devtype_aux[] = {
 	{ .name = "qcom_geni_se.geni_uart" },
 	{ }
 };
 MODULE_DEVICE_TABLE(auxiliary, geni_uart_devtype_aux);
 
-static int qcom_geni_serial_aux_probe(struct auxiliary_device *auxdev,
-				      const struct auxiliary_device_id *id)
-{
-	struct device *dev = &auxdev->dev;
-
-	return qcom_geni_serial_probe_common(dev, dev_get_drvdata(dev));
-}
-
-static void qcom_geni_serial_aux_remove(struct auxiliary_device *auxdev)
+static void qcom_geni_serial_remove(struct auxiliary_device *auxdev)
 {
 	struct device *dev = &auxdev->dev;
 	struct qcom_geni_serial_port *port = dev_get_drvdata(dev);
@@ -1852,8 +1810,8 @@ static void qcom_geni_serial_aux_remove(struct auxiliary_device *auxdev)
 static struct auxiliary_driver geni_uart_driver_aux = {
 	.name = "geni_uart",
 	.id_table = geni_uart_devtype_aux,
-	.probe = qcom_geni_serial_aux_probe,
-	.remove = qcom_geni_serial_aux_remove,
+	.probe = qcom_geni_serial_probe,
+	.remove = qcom_geni_serial_remove,
 	.driver.pm = &qcom_geni_serial_pm_ops,
 };
 module_auxiliary_driver(geni_uart_driver_aux);
@@ -1872,18 +1830,12 @@ static int __init qcom_geni_serial_init(void)
 		return ret;
 	}
 
-	ret = platform_driver_register(&qcom_geni_serial_platform_driver);
-	if (ret) {
-		console_unregister(&qcom_geni_console_driver);
-		uart_unregister_driver(&qcom_geni_uart_driver);
-	}
 	return ret;
 }
 module_init(qcom_geni_serial_init);
 
 static void __exit qcom_geni_serial_exit(void)
 {
-	platform_driver_unregister(&qcom_geni_serial_platform_driver);
 	console_unregister(&qcom_geni_console_driver);
 	uart_unregister_driver(&qcom_geni_uart_driver);
 }

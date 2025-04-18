@@ -1129,6 +1129,8 @@ static const struct of_device_id qcom_geni_dt_match[] = {
 	{ .compatible = "qcom,geni-i2c" },
 	{ .compatible = "qcom,geni-i2c-master-hub", .data = (void *)true },
 	{ .compatible = "qcom,geni-spi" },
+	{ .compatible = "qcom,geni-uart" },
+	{ .compatible = "qcom,geni-debug-uart", .data = (void *)true },
 	{ }
 };
 MODULE_DEVICE_TABLE(of, qcom_geni_dt_match);
