@@ -2,6 +2,7 @@
 // Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
 
 #include <linux/acpi.h>
+#include <linux/auxiliary_bus.h>
 #include <linux/clk.h>
 #include <linux/dmaengine.h>
 #include <linux/dma-mapping.h>
@@ -80,7 +81,6 @@ enum geni_i2c_err_code {
 struct geni_i2c_dev {
 	struct geni_se *se;
 	u32 tx_wm;
-	int irq;
 	int err;
 	struct i2c_adapter adap;
 	struct completion done;
@@ -91,7 +91,6 @@ struct geni_i2c_dev {
 	struct clk *core_clk;
 	u32 clk_freq_out;
 	const struct geni_i2c_clk_fld *clk_fld;
-	int suspended;
 	void *dma_buf;
 	size_t xfer_len;
 	dma_addr_t dma_addr;
@@ -775,23 +774,22 @@ err_tx:
 	return ret;
 }
 
-static int geni_i2c_probe(struct platform_device *pdev)
+static int geni_i2c_probe_common(struct device *dev, struct geni_se *se)
 {
 	struct geni_i2c_dev *gi2c;
 	u32 proto, tx_depth, fifo_disable;
 	int ret;
-	struct device *dev = &pdev->dev;
 	const struct geni_i2c_desc *desc = NULL;
 
 	gi2c = devm_kzalloc(dev, sizeof(*gi2c), GFP_KERNEL);
 	if (!gi2c)
 		return -ENOMEM;
 
-	gi2c->se = qcom_geni_alloc_se(pdev);
-	if (IS_ERR(gi2c->se))
-		return PTR_ERR(gi2c->se);
+	gi2c->se = se;
+	if (!gi2c->se)
+		return -EINVAL;
 
-	desc = device_get_match_data(&pdev->dev);
+	desc = device_get_match_data(dev);
 
 	ret = device_property_read_u32(dev, "clock-frequency",
 				       &gi2c->clk_freq_out);
@@ -811,14 +809,14 @@ static int geni_i2c_probe(struct platform_device *pdev)
 	gi2c->adap.algo = &geni_i2c_algo;
 	init_completion(&gi2c->done);
 	spin_lock_init(&gi2c->lock);
-	platform_set_drvdata(pdev, gi2c);
+	dev_set_drvdata(dev, gi2c);
 
 	/* Keep interrupts disabled initially to allow for low-power modes */
-	ret = devm_request_irq(dev, gi2c->irq, geni_i2c_irq, IRQF_NO_AUTOEN,
+	ret = devm_request_irq(dev, se->irq, geni_i2c_irq, IRQF_NO_AUTOEN,
 			       dev_name(dev), gi2c);
 	if (ret)
 		return dev_err_probe(dev, ret,
-				     "Request_irq failed: %d\n", gi2c->irq);
+				     "Request_irq failed: %d\n", se->irq);
 
 	i2c_set_adapdata(&gi2c->adap, gi2c);
 	gi2c->adap.dev.parent = dev;
@@ -886,12 +884,6 @@ static int geni_i2c_probe(struct platform_device *pdev)
 	if (ret)
 		goto err_dma;
 
-	gi2c->suspended = 1;
-	pm_runtime_set_suspended(gi2c->se->dev);
-	pm_runtime_set_autosuspend_delay(gi2c->se->dev, I2C_AUTO_SUSPEND_DELAY);
-	pm_runtime_use_autosuspend(gi2c->se->dev);
-	pm_runtime_enable(gi2c->se->dev);
-
 	ret = i2c_add_adapter(&gi2c->adap);
 	if (ret) {
 		dev_err_probe(dev, ret, "Error adding i2c adapter\n");
@@ -916,6 +908,26 @@ err_dma:
 	return ret;
 }
 
+static int geni_i2c_probe(struct platform_device *pdev)
+{
+	struct geni_i2c_dev *gi2c;
+	int ret;
+
+	ret = geni_i2c_probe_common(&pdev->dev, qcom_geni_alloc_se(pdev));
+	if (!ret) {
+		gi2c = platform_get_drvdata(pdev);
+		if (!gi2c)
+			return -EINVAL;
+
+		pm_runtime_set_suspended(gi2c->se->dev);
+		pm_runtime_set_autosuspend_delay(gi2c->se->dev, I2C_AUTO_SUSPEND_DELAY);
+		pm_runtime_use_autosuspend(gi2c->se->dev);
+		pm_runtime_enable(gi2c->se->dev);
+	}
+
+	return ret;
+}
+
 static void geni_i2c_remove(struct platform_device *pdev)
 {
 	struct geni_i2c_dev *gi2c = platform_get_drvdata(pdev);
@@ -933,68 +945,17 @@ static void geni_i2c_shutdown(struct platform_device *pdev)
 	i2c_mark_adapter_suspended(&gi2c->adap);
 }
 
-static int __maybe_unused geni_i2c_runtime_suspend(struct device *dev)
-{
-	int ret;
-	struct geni_i2c_dev *gi2c = dev_get_drvdata(dev);
-
-	disable_irq(gi2c->irq);
-	ret = geni_se_resources_off(gi2c->se);
-	if (ret) {
-		enable_irq(gi2c->irq);
-		return ret;
-
-	} else {
-		gi2c->suspended = 1;
-	}
-
-	clk_disable_unprepare(gi2c->se->core_clk);
-
-	return geni_icc_disable(gi2c->se);
-}
-
-static int __maybe_unused geni_i2c_runtime_resume(struct device *dev)
-{
-	int ret;
-	struct geni_i2c_dev *gi2c = dev_get_drvdata(dev);
-
-	ret = geni_icc_enable(gi2c->se);
-	if (ret)
-		return ret;
-
-	ret = clk_prepare_enable(gi2c->se->core_clk);
-	if (ret)
-		goto out_icc_disable;
-
-	ret = geni_se_resources_on(gi2c->se);
-	if (ret)
-		goto out_clk_disable;
-
-	enable_irq(gi2c->irq);
-	gi2c->suspended = 0;
-
-	return 0;
-
-out_clk_disable:
-	clk_disable_unprepare(gi2c->se->core_clk);
-out_icc_disable:
-	geni_icc_disable(gi2c->se);
-
-	return ret;
-}
-
 static int __maybe_unused geni_i2c_suspend_noirq(struct device *dev)
 {
 	struct geni_i2c_dev *gi2c = dev_get_drvdata(dev);
 
 	i2c_mark_adapter_suspended(&gi2c->adap);
 
-	if (!gi2c->suspended) {
-		geni_i2c_runtime_suspend(gi2c->se->dev);
-		pm_runtime_disable(gi2c->se->dev);
-		pm_runtime_set_suspended(gi2c->se->dev);
-		pm_runtime_enable(gi2c->se->dev);
-	}
+	pm_runtime_put_sync(gi2c->se->dev);
+	pm_runtime_disable(gi2c->se->dev);
+	pm_runtime_set_suspended(gi2c->se->dev);
+	pm_runtime_enable(gi2c->se->dev);
+
 	return 0;
 }
 
@@ -1008,8 +969,6 @@ static int __maybe_unused geni_i2c_resume_noirq(struct device *dev)
 
 static const struct dev_pm_ops geni_i2c_pm_ops = {
 	SET_NOIRQ_SYSTEM_SLEEP_PM_OPS(geni_i2c_suspend_noirq, geni_i2c_resume_noirq)
-	SET_RUNTIME_PM_OPS(geni_i2c_runtime_suspend, geni_i2c_runtime_resume,
-									NULL)
 };
 
 static const struct geni_i2c_desc i2c_master_hub = {
@@ -1023,6 +982,49 @@ static const struct of_device_id geni_i2c_dt_match[] = {
 	{}
 };
 MODULE_DEVICE_TABLE(of, geni_i2c_dt_match);
+
+static void geni_i2c_aux_remove(struct auxiliary_device *auxdev)
+{
+	struct geni_i2c_dev *gi2c = dev_get_drvdata(&auxdev->dev);
+
+	i2c_del_adapter(&gi2c->adap);
+	release_gpi_dma(gi2c);
+	pm_runtime_disable(gi2c->se->dev);
+}
+
+static void geni_i2c_aux_shutdown(struct auxiliary_device *auxdev)
+{
+	struct geni_i2c_dev *gi2c = dev_get_drvdata(&auxdev->dev);
+
+	/* Make client i2c transfers start failing */
+	i2c_mark_adapter_suspended(&gi2c->adap);
+}
+
+static int geni_i2c_aux_probe(struct auxiliary_device *auxdev,
+			      const struct auxiliary_device_id *id)
+{
+	struct device *dev = &auxdev->dev;
+
+	return geni_i2c_probe_common(dev, dev_get_drvdata(dev));
+}
+
+static const struct auxiliary_device_id geni_i2c_devtype_aux[] = {
+	{ .name = "qcom_geni_se.geni_i2c" },
+	{ }
+};
+MODULE_DEVICE_TABLE(auxiliary, geni_i2c_devtype_aux);
+
+static struct auxiliary_driver geni_i2c_driver_aux = {
+	.name = "geni_i2c",
+	.id_table = geni_i2c_devtype_aux,
+	.probe = geni_i2c_aux_probe,
+	.remove = geni_i2c_aux_remove,
+	.shutdown = geni_i2c_aux_shutdown,
+	.driver = {
+		.pm = &geni_i2c_pm_ops,
+	},
+};
+module_auxiliary_driver(geni_i2c_driver_aux);
 
 static struct platform_driver geni_i2c_driver = {
 	.probe  = geni_i2c_probe,
