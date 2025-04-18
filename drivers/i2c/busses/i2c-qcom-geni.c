@@ -100,11 +100,6 @@ struct geni_i2c_dev {
 	bool abort_done;
 };
 
-struct geni_i2c_desc {
-	bool no_dma_support;
-	unsigned int tx_fifo_depth;
-};
-
 struct geni_i2c_err_log {
 	int err;
 	const char *msg;
@@ -774,22 +769,24 @@ err_tx:
 	return ret;
 }
 
-static int geni_i2c_probe_common(struct device *dev, struct geni_se *se)
+static int geni_i2c_probe(struct auxiliary_device *auxdev,
+			  const struct auxiliary_device_id *id)
 {
+	struct device *dev = &auxdev->dev;
 	struct geni_i2c_dev *gi2c;
 	u32 proto, tx_depth, fifo_disable;
+	bool is_i2c_master_hub;
 	int ret;
-	const struct geni_i2c_desc *desc = NULL;
 
 	gi2c = devm_kzalloc(dev, sizeof(*gi2c), GFP_KERNEL);
 	if (!gi2c)
 		return -ENOMEM;
 
-	gi2c->se = se;
+	gi2c->se = dev_get_drvdata(dev);
 	if (!gi2c->se)
 		return -EINVAL;
 
-	desc = device_get_match_data(dev);
+	is_i2c_master_hub = !!device_get_match_data(gi2c->se->dev);
 
 	ret = device_property_read_u32(dev, "clock-frequency",
 				       &gi2c->clk_freq_out);
@@ -812,11 +809,11 @@ static int geni_i2c_probe_common(struct device *dev, struct geni_se *se)
 	dev_set_drvdata(dev, gi2c);
 
 	/* Keep interrupts disabled initially to allow for low-power modes */
-	ret = devm_request_irq(dev, se->irq, geni_i2c_irq, IRQF_NO_AUTOEN,
+	ret = devm_request_irq(dev, gi2c->se->irq, geni_i2c_irq, IRQF_NO_AUTOEN,
 			       dev_name(dev), gi2c);
 	if (ret)
 		return dev_err_probe(dev, ret,
-				     "Request_irq failed: %d\n", se->irq);
+				     "Request_irq failed: %d\n", gi2c->se->irq);
 
 	i2c_set_adapdata(&gi2c->adap, gi2c);
 	gi2c->adap.dev.parent = dev;
@@ -838,7 +835,7 @@ static int geni_i2c_probe_common(struct device *dev, struct geni_se *se)
 		goto err_resources;
 	}
 
-	if (desc && desc->no_dma_support)
+	if (is_i2c_master_hub)
 		fifo_disable = false;
 	else
 		fifo_disable = readl_relaxed(gi2c->se->base + GENI_IF_DISABLE_RO) & FIFO_IF_DISABLE;
@@ -853,12 +850,9 @@ static int geni_i2c_probe_common(struct device *dev, struct geni_se *se)
 		dev_dbg(dev, "Using GPI DMA mode for I2C\n");
 	} else {
 		gi2c->gpi_mode = false;
-		tx_depth = geni_se_get_tx_fifo_depth(gi2c->se);
 
 		/* I2C Master Hub Serial Elements doesn't have the HW_PARAM_0 register */
-		if (!tx_depth && desc)
-			tx_depth = desc->tx_fifo_depth;
-
+		tx_depth = is_i2c_master_hub ? 16 : geni_se_get_tx_fifo_depth(gi2c->se);
 		if (!tx_depth) {
 			ret = dev_err_probe(dev, -EINVAL,
 					    "Invalid TX FIFO depth\n");
@@ -908,43 +902,6 @@ err_dma:
 	return ret;
 }
 
-static int geni_i2c_probe(struct platform_device *pdev)
-{
-	struct geni_i2c_dev *gi2c;
-	int ret;
-
-	ret = geni_i2c_probe_common(&pdev->dev, qcom_geni_alloc_se(pdev));
-	if (!ret) {
-		gi2c = platform_get_drvdata(pdev);
-		if (!gi2c)
-			return -EINVAL;
-
-		pm_runtime_set_suspended(gi2c->se->dev);
-		pm_runtime_set_autosuspend_delay(gi2c->se->dev, I2C_AUTO_SUSPEND_DELAY);
-		pm_runtime_use_autosuspend(gi2c->se->dev);
-		pm_runtime_enable(gi2c->se->dev);
-	}
-
-	return ret;
-}
-
-static void geni_i2c_remove(struct platform_device *pdev)
-{
-	struct geni_i2c_dev *gi2c = platform_get_drvdata(pdev);
-
-	i2c_del_adapter(&gi2c->adap);
-	release_gpi_dma(gi2c);
-	pm_runtime_disable(gi2c->se->dev);
-}
-
-static void geni_i2c_shutdown(struct platform_device *pdev)
-{
-	struct geni_i2c_dev *gi2c = platform_get_drvdata(pdev);
-
-	/* Make client i2c transfers start failing */
-	i2c_mark_adapter_suspended(&gi2c->adap);
-}
-
 static int __maybe_unused geni_i2c_suspend_noirq(struct device *dev)
 {
 	struct geni_i2c_dev *gi2c = dev_get_drvdata(dev);
@@ -971,19 +928,7 @@ static const struct dev_pm_ops geni_i2c_pm_ops = {
 	SET_NOIRQ_SYSTEM_SLEEP_PM_OPS(geni_i2c_suspend_noirq, geni_i2c_resume_noirq)
 };
 
-static const struct geni_i2c_desc i2c_master_hub = {
-	.no_dma_support = true,
-	.tx_fifo_depth = 16,
-};
-
-static const struct of_device_id geni_i2c_dt_match[] = {
-	{ .compatible = "qcom,geni-i2c" },
-	{ .compatible = "qcom,geni-i2c-master-hub", .data = &i2c_master_hub },
-	{}
-};
-MODULE_DEVICE_TABLE(of, geni_i2c_dt_match);
-
-static void geni_i2c_aux_remove(struct auxiliary_device *auxdev)
+static void geni_i2c_remove(struct auxiliary_device *auxdev)
 {
 	struct geni_i2c_dev *gi2c = dev_get_drvdata(&auxdev->dev);
 
@@ -992,20 +937,12 @@ static void geni_i2c_aux_remove(struct auxiliary_device *auxdev)
 	pm_runtime_disable(gi2c->se->dev);
 }
 
-static void geni_i2c_aux_shutdown(struct auxiliary_device *auxdev)
+static void geni_i2c_shutdown(struct auxiliary_device *auxdev)
 {
 	struct geni_i2c_dev *gi2c = dev_get_drvdata(&auxdev->dev);
 
 	/* Make client i2c transfers start failing */
 	i2c_mark_adapter_suspended(&gi2c->adap);
-}
-
-static int geni_i2c_aux_probe(struct auxiliary_device *auxdev,
-			      const struct auxiliary_device_id *id)
-{
-	struct device *dev = &auxdev->dev;
-
-	return geni_i2c_probe_common(dev, dev_get_drvdata(dev));
 }
 
 static const struct auxiliary_device_id geni_i2c_devtype_aux[] = {
@@ -1017,28 +954,14 @@ MODULE_DEVICE_TABLE(auxiliary, geni_i2c_devtype_aux);
 static struct auxiliary_driver geni_i2c_driver_aux = {
 	.name = "geni_i2c",
 	.id_table = geni_i2c_devtype_aux,
-	.probe = geni_i2c_aux_probe,
-	.remove = geni_i2c_aux_remove,
-	.shutdown = geni_i2c_aux_shutdown,
+	.probe = geni_i2c_probe,
+	.remove = geni_i2c_remove,
+	.shutdown = geni_i2c_shutdown,
 	.driver = {
 		.pm = &geni_i2c_pm_ops,
 	},
 };
 module_auxiliary_driver(geni_i2c_driver_aux);
-
-static struct platform_driver geni_i2c_driver = {
-	.probe  = geni_i2c_probe,
-	.remove = geni_i2c_remove,
-	.shutdown = geni_i2c_shutdown,
-	.driver = {
-		.name = "geni_i2c",
-		.pm = &geni_i2c_pm_ops,
-		.of_match_table = geni_i2c_dt_match,
-		.acpi_match_table = ACPI_PTR(geni_i2c_acpi_match),
-	},
-};
-
-module_platform_driver(geni_i2c_driver);
 
 MODULE_DESCRIPTION("I2C Controller Driver for GENI based QUP cores");
 MODULE_LICENSE("GPL v2");
