@@ -1128,10 +1128,61 @@ static const struct of_device_id qcom_geni_dt_match[] = {
 };
 MODULE_DEVICE_TABLE(of, qcom_geni_dt_match);
 
+static int __maybe_unused geni_se_runtime_suspend(struct device *dev)
+{
+	struct geni_se *se = dev_get_drvdata(dev);
+	int ret;
+
+	disable_irq(se->irq);
+	ret = geni_se_resources_off(se);
+	if (ret) {
+		enable_irq(se->irq);
+		return ret;
+	}
+
+	clk_disable_unprepare(se->core_clk);
+
+	return geni_icc_disable(se);
+}
+
+static int __maybe_unused geni_se_runtime_resume(struct device *dev)
+{
+	struct geni_se *se = dev_get_drvdata(dev);
+	int ret;
+
+	ret = geni_icc_enable(se);
+	if (ret)
+		return ret;
+
+	ret = clk_prepare_enable(se->core_clk);
+	if (ret)
+		goto out_icc_disable;
+
+	ret = geni_se_resources_on(se);
+	if (ret)
+		goto out_clk_disable;
+
+	enable_irq(se->irq);
+
+	return 0;
+
+out_clk_disable:
+	clk_disable_unprepare(se->core_clk);
+out_icc_disable:
+	geni_icc_disable(se);
+
+	return ret;
+}
+
+static const struct dev_pm_ops geni_se_pm_ops = {
+	SET_RUNTIME_PM_OPS(geni_se_runtime_suspend, geni_se_runtime_resume, NULL)
+};
+
 static struct platform_driver qcom_geni_driver = {
 	.driver = {
 		.name = "qcom_geni",
 		.of_match_table = qcom_geni_dt_match,
+		.pm = &geni_se_pm_ops,
 	},
 	.probe = qcom_geni_probe,
 };
