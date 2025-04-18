@@ -1803,10 +1803,9 @@ static int qcom_geni_serial_suspend(struct device *dev)
 	 * This is done so we can hit the lowest possible state in suspend
 	 * even with no_console_suspend
 	 */
-	if (uart_console(uport)) {
+	if (uart_console(uport))
 		geni_icc_set_tag(&port->se, QCOM_ICC_TAG_ACTIVE_ONLY);
-		geni_icc_set_bw(&port->se);
-	}
+
 	return uart_suspend_port(private_data->drv, uport);
 }
 
@@ -1818,10 +1817,9 @@ static int qcom_geni_serial_resume(struct device *dev)
 	struct qcom_geni_private_data *private_data = uport->private_data;
 
 	ret = uart_resume_port(private_data->drv, uport);
-	if (uart_console(uport)) {
+	if (uart_console(uport))
 		geni_icc_set_tag(&port->se, QCOM_ICC_TAG_ALWAYS);
-		geni_icc_set_bw(&port->se);
-	}
+
 	return ret;
 }
 
