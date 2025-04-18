@@ -851,12 +851,10 @@ static int geni_i2c_probe(struct platform_device *pdev)
 	 * register access.
 	 * Set quota for DDR based on bus speed.
 	 */
-	gi2c->se.icc_paths[GENI_TO_CORE].avg_bw = GENI_DEFAULT_BW;
-	gi2c->se.icc_paths[CPU_TO_GENI].avg_bw = GENI_DEFAULT_BW;
-	if (!desc || desc->icc_ddr)
-		gi2c->se.icc_paths[GENI_TO_DDR].avg_bw = Bps_to_icc(gi2c->clk_freq_out);
-
-	ret = geni_icc_set_bw(&gi2c->se);
+	ret = geni_icc_set_bw_ab(&gi2c->se,
+				 GENI_DEFAULT_BW,
+				 GENI_DEFAULT_BW,
+				 Bps_to_icc(gi2c->clk_freq_out));
 	if (ret)
 		return ret;
 
