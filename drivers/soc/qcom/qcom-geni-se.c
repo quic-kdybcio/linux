@@ -852,12 +852,26 @@ int geni_icc_set_bw(struct geni_se *se)
 }
 EXPORT_SYMBOL_GPL(geni_icc_set_bw);
 
+int geni_icc_set_bw_ab(struct geni_se *se, u32 core_ab, u32 cfg_ab, u32 ddr_ab)
+{
+	se->icc_paths[GENI_TO_CORE].avg_bw = core_ab;
+	se->icc_paths[CPU_TO_GENI].avg_bw = cfg_ab;
+	se->icc_paths[GENI_TO_DDR].avg_bw = ddr_ab;
+
+	return geni_icc_set_bw(se);
+}
+EXPORT_SYMBOL_GPL(geni_icc_set_bw_ab);
+
 void geni_icc_set_tag(struct geni_se *se, u32 tag)
 {
 	int i;
 
-	for (i = 0; i < ARRAY_SIZE(se->icc_paths); i++)
+	for (i = 0; i < ARRAY_SIZE(se->icc_paths); i++) {
 		icc_set_tag(se->icc_paths[i].path, tag);
+
+		/* Flush the tag change to ICC core */
+		icc_enable(se->icc_paths[i].path);
+	}
 }
 EXPORT_SYMBOL_GPL(geni_icc_set_tag);
 
