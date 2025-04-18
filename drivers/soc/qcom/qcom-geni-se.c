@@ -834,31 +834,27 @@ err:
 }
 EXPORT_SYMBOL_GPL(geni_icc_get);
 
-int geni_icc_set_bw(struct geni_se *se)
-{
-	int i, ret;
-
-	for (i = 0; i < ARRAY_SIZE(se->icc_paths); i++) {
-		ret = icc_set_bw(se->icc_paths[i].path,
-			se->icc_paths[i].avg_bw, se->icc_paths[i].avg_bw);
-		if (ret) {
-			dev_err_ratelimited(se->dev, "ICC BW voting failed on path '%s': %d\n",
-					icc_path_names[i], ret);
-			return ret;
-		}
-	}
-
-	return 0;
-}
-EXPORT_SYMBOL_GPL(geni_icc_set_bw);
-
 int geni_icc_set_bw_ab(struct geni_se *se, u32 core_ab, u32 cfg_ab, u32 ddr_ab)
 {
-	se->icc_paths[GENI_TO_CORE].avg_bw = core_ab;
-	se->icc_paths[CPU_TO_GENI].avg_bw = cfg_ab;
-	se->icc_paths[GENI_TO_DDR].avg_bw = ddr_ab;
+	int ret;
 
-	return geni_icc_set_bw(se);
+	ret = icc_set_bw(se->icc_paths[GENI_TO_CORE].path, core_ab, core_ab);
+	if (ret) {
+		dev_err(se->dev, "icc_set_bw failed for 'qup-core': %d\n", ret);
+		return ret;
+	}
+
+	ret = icc_set_bw(se->icc_paths[CPU_TO_GENI].path, cfg_ab, cfg_ab);
+	if (ret) {
+		dev_err(se->dev, "icc_set_bw failed for 'qup-config': %d\n", ret);
+		return ret;
+	}
+
+	ret = icc_set_bw(se->icc_paths[GENI_TO_DDR].path, ddr_ab, ddr_ab);
+	if (ret)
+		dev_err(se->dev, "icc_set_bw failed for 'qup-memory': %d\n", ret);
+
+	return ret;
 }
 EXPORT_SYMBOL_GPL(geni_icc_set_bw_ab);
 
@@ -1024,9 +1020,7 @@ struct geni_se *qcom_geni_alloc_se(struct platform_device *pdev)
 	if (ret)
 		return ERR_PTR(ret);
 
-	se->icc_paths[GENI_TO_CORE].avg_bw = GENI_DEFAULT_BW;
-	se->icc_paths[CPU_TO_GENI].avg_bw = GENI_DEFAULT_BW;
-	ret = geni_icc_set_bw(se);
+	ret = geni_icc_set_bw_ab(se, GENI_DEFAULT_BW, GENI_DEFAULT_BW, 0);
 	if (ret)
 		return ERR_PTR(ret);
 
