@@ -386,8 +386,9 @@ static int geni_spi_set_clock_and_bw(struct spi_geni_master *mas,
 	writel(m_clk_cfg, se->base + GENI_SER_M_CLK_CFG);
 
 	/* Set BW quota for CPU as driver supports FIFO mode only. */
-	se->icc_paths[CPU_TO_GENI].avg_bw = Bps_to_icc(mas->cur_speed_hz);
-	ret = geni_icc_set_bw(se);
+	ret = geni_icc_set_bw_ab(se,
+				 Bps_to_icc(CORE_2X_50_MHZ),
+				 Bps_to_icc(mas->cur_speed_hz), 0);
 	if (ret)
 		return ret;
 
@@ -1131,10 +1132,9 @@ static int spi_geni_probe(struct platform_device *pdev)
 		spi->target = true;
 
 	/* Set the bus quota to a reasonable value for register access */
-	mas->se.icc_paths[GENI_TO_CORE].avg_bw = Bps_to_icc(CORE_2X_50_MHZ);
-	mas->se.icc_paths[CPU_TO_GENI].avg_bw = GENI_DEFAULT_BW;
-
-	ret = geni_icc_set_bw(&mas->se);
+	ret = geni_icc_set_bw_ab(&mas->se,
+				 Bps_to_icc(CORE_2X_50_MHZ),
+				 GENI_DEFAULT_BW, 0);
 	if (ret)
 		return ret;
 
