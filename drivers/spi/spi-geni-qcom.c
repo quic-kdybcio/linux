@@ -10,7 +10,6 @@
 #include <linux/io.h>
 #include <linux/log2.h>
 #include <linux/module.h>
-#include <linux/platform_device.h>
 #include <linux/pm_opp.h>
 #include <linux/pm_runtime.h>
 #include <linux/property.h>
@@ -1049,8 +1048,10 @@ static irqreturn_t geni_spi_isr(int irq, void *data)
 	return IRQ_HANDLED;
 }
 
-static int spi_geni_probe_common(struct device *dev, struct geni_se *se)
+static int geni_spi_probe(struct auxiliary_device *auxdev,
+			  const struct auxiliary_device_id *id)
 {
+	struct device *dev = &auxdev->dev;
 	struct spi_controller *spi;
 	struct spi_geni_master *mas;
 	int ret;
@@ -1065,7 +1066,7 @@ static int spi_geni_probe_common(struct device *dev, struct geni_se *se)
 	mas = spi_controller_get_devdata(spi);
 	mas->dev = dev;
 
-	mas->se = se;
+	mas->se = dev_get_drvdata(dev);
 	if (!mas->se)
 		return -EINVAL;
 
@@ -1139,25 +1140,6 @@ static int spi_geni_probe_common(struct device *dev, struct geni_se *se)
 	return devm_spi_register_controller(dev, spi);
 }
 
-static int spi_geni_probe(struct platform_device *pdev)
-{
-	struct spi_geni_master *mas;
-	int ret;
-
-	ret = spi_geni_probe_common(&pdev->dev, qcom_geni_alloc_se(pdev));
-	if (!ret) {
-		mas = platform_get_drvdata(pdev);
-		if (!mas)
-			return -EINVAL;
-
-		pm_runtime_use_autosuspend(mas->se->dev);
-		pm_runtime_set_autosuspend_delay(mas->se->dev, 250);
-		ret = devm_pm_runtime_enable(mas->se->dev);
-	}
-
-	return ret;
-}
-
 static int __maybe_unused spi_geni_runtime_suspend(struct device *dev)
 {
 	struct spi_controller *spi = dev_get_drvdata(dev);
@@ -1222,20 +1204,6 @@ static const struct dev_pm_ops spi_geni_pm_ops = {
 	SET_SYSTEM_SLEEP_PM_OPS(spi_geni_suspend, spi_geni_resume)
 };
 
-static const struct of_device_id spi_geni_dt_match[] = {
-	{ .compatible = "qcom,geni-spi" },
-	{}
-};
-MODULE_DEVICE_TABLE(of, spi_geni_dt_match);
-
-static int geni_spi_aux_probe(struct auxiliary_device *auxdev,
-			      const struct auxiliary_device_id *id)
-{
-	struct device *dev = &auxdev->dev;
-
-	return spi_geni_probe_common(dev, dev_get_drvdata(dev));
-}
-
 static const struct auxiliary_device_id geni_spi_devtype_aux[] = {
 	{ .name = "qcom_geni_se.geni_spi" },
 	{}
@@ -1245,20 +1213,10 @@ MODULE_DEVICE_TABLE(auxiliary, geni_spi_devtype_aux);
 static struct auxiliary_driver geni_spi_driver_aux = {
 	.name = "geni_spi_aux",
 	.id_table = geni_spi_devtype_aux,
-	.probe = geni_spi_aux_probe,
+	.probe = geni_spi_probe,
 	.driver.pm = &spi_geni_pm_ops,
 };
 module_auxiliary_driver(geni_spi_driver_aux);
-
-static struct platform_driver spi_geni_driver = {
-	.probe  = spi_geni_probe,
-	.driver = {
-		.name = "geni_spi",
-		.pm = &spi_geni_pm_ops,
-		.of_match_table = spi_geni_dt_match,
-	},
-};
-module_platform_driver(spi_geni_driver);
 
 MODULE_DESCRIPTION("SPI driver for GENI based QUP cores");
 MODULE_LICENSE("GPL v2");

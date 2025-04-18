@@ -1128,6 +1128,7 @@ static const struct of_device_id qcom_geni_dt_match[] = {
 	/* Backwards compatibility */
 	{ .compatible = "qcom,geni-i2c" },
 	{ .compatible = "qcom,geni-i2c-master-hub", .data = (void *)true },
+	{ .compatible = "qcom,geni-spi" },
 	{ }
 };
 MODULE_DEVICE_TABLE(of, qcom_geni_dt_match);
