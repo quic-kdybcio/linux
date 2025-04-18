@@ -807,30 +807,32 @@ EXPORT_SYMBOL_GPL(geni_se_rx_dma_unprep);
 
 int geni_icc_get(struct geni_se *se, const char *icc_ddr)
 {
-	int i, err;
-	const char *icc_names[] = {"qup-core", "qup-config", icc_ddr};
+	struct icc_path **paths = se->icc_paths;
 
 	if (has_acpi_companion(se->dev))
 		return 0;
 
-	for (i = 0; i < ARRAY_SIZE(se->icc_paths); i++) {
-		if (!icc_names[i])
-			continue;
+	paths[GENI_TO_CORE] = devm_of_icc_get(se->dev, "qup-core");
+	if (IS_ERR(paths[GENI_TO_CORE]))
+		return dev_err_probe(se->dev, PTR_ERR(paths[GENI_TO_CORE]),
+				     "Failed to get 'qup-core' ICC path\n");
 
-		se->icc_paths[i].path = devm_of_icc_get(se->dev, icc_names[i]);
-		if (IS_ERR(se->icc_paths[i].path))
-			goto err;
+	paths[CPU_TO_GENI] = devm_of_icc_get(se->dev, "qup-config");
+	if (IS_ERR(paths[CPU_TO_GENI]))
+		return dev_err_probe(se->dev, PTR_ERR(paths[CPU_TO_GENI]),
+				     "Failed to get 'qup-config' ICC path\n");
+
+	/* The DDR path is optional, depending on protocol and hw capabilities */
+	paths[GENI_TO_DDR] = devm_of_icc_get(se->dev, "qup-memory");
+	if (IS_ERR(paths[GENI_TO_DDR])) {
+		if (PTR_ERR(paths[GENI_TO_DDR]) == -ENODATA)
+			paths[GENI_TO_DDR] = NULL;
+		else
+			return dev_err_probe(se->dev, PTR_ERR(paths[GENI_TO_DDR]),
+					     "Failed to get 'qup-memory' ICC path\n");
 	}
 
 	return 0;
-
-err:
-	err = PTR_ERR(se->icc_paths[i].path);
-	if (err != -EPROBE_DEFER)
-		dev_err_ratelimited(se->dev, "Failed to get ICC path '%s': %d\n",
-					icc_names[i], err);
-	return err;
-
 }
 EXPORT_SYMBOL_GPL(geni_icc_get);
 
@@ -838,19 +840,19 @@ int geni_icc_set_bw_ab(struct geni_se *se, u32 core_ab, u32 cfg_ab, u32 ddr_ab)
 {
 	int ret;
 
-	ret = icc_set_bw(se->icc_paths[GENI_TO_CORE].path, core_ab, core_ab);
+	ret = icc_set_bw(se->icc_paths[GENI_TO_CORE], core_ab, core_ab);
 	if (ret) {
 		dev_err(se->dev, "icc_set_bw failed for 'qup-core': %d\n", ret);
 		return ret;
 	}
 
-	ret = icc_set_bw(se->icc_paths[CPU_TO_GENI].path, cfg_ab, cfg_ab);
+	ret = icc_set_bw(se->icc_paths[CPU_TO_GENI], cfg_ab, cfg_ab);
 	if (ret) {
 		dev_err(se->dev, "icc_set_bw failed for 'qup-config': %d\n", ret);
 		return ret;
 	}
 
-	ret = icc_set_bw(se->icc_paths[GENI_TO_DDR].path, ddr_ab, ddr_ab);
+	ret = icc_set_bw(se->icc_paths[GENI_TO_DDR], ddr_ab, ddr_ab);
 	if (ret)
 		dev_err(se->dev, "icc_set_bw failed for 'qup-memory': %d\n", ret);
 
@@ -863,10 +865,10 @@ void geni_icc_set_tag(struct geni_se *se, u32 tag)
 	int i;
 
 	for (i = 0; i < ARRAY_SIZE(se->icc_paths); i++) {
-		icc_set_tag(se->icc_paths[i].path, tag);
+		icc_set_tag(se->icc_paths[i], tag);
 
 		/* Flush the tag change to ICC core */
-		icc_enable(se->icc_paths[i].path);
+		icc_enable(se->icc_paths[i]);
 	}
 }
 EXPORT_SYMBOL_GPL(geni_icc_set_tag);
@@ -877,7 +879,7 @@ int geni_icc_enable(struct geni_se *se)
 	int i, ret;
 
 	for (i = 0; i < ARRAY_SIZE(se->icc_paths); i++) {
-		ret = icc_enable(se->icc_paths[i].path);
+		ret = icc_enable(se->icc_paths[i]);
 		if (ret) {
 			dev_err_ratelimited(se->dev, "ICC enable failed on path '%s': %d\n",
 					icc_path_names[i], ret);
@@ -894,7 +896,7 @@ int geni_icc_disable(struct geni_se *se)
 	int i, ret;
 
 	for (i = 0; i < ARRAY_SIZE(se->icc_paths); i++) {
-		ret = icc_disable(se->icc_paths[i].path);
+		ret = icc_disable(se->icc_paths[i]);
 		if (ret) {
 			dev_err_ratelimited(se->dev, "ICC disable failed on path '%s': %d\n",
 					icc_path_names[i], ret);
