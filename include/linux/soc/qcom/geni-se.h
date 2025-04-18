@@ -48,11 +48,6 @@ enum geni_icc_path_index {
 	GENI_TO_DDR
 };
 
-struct geni_icc_path {
-	struct icc_path *path;
-	unsigned int avg_bw;
-};
-
 /**
  * struct geni_se - GENI Serial Engine
  * @base:		Base Address of the Serial Engine's register block
@@ -73,7 +68,7 @@ struct geni_se {
 	struct clk *core_clk;
 	unsigned int num_clk_levels;
 	unsigned long *clk_perf_tbl;
-	struct geni_icc_path icc_paths[3];
+	struct icc_path *icc_paths[3];
 	int irq;
 };
 
