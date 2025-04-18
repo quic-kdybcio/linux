@@ -4,6 +4,7 @@
 /* Disable MMIO tracing to prevent excessive logging of unwanted MMIO traces */
 #define __DISABLE_TRACE_MMIO__
 
+#include <linux/auxiliary_bus.h>
 #include <linux/clk.h>
 #include <linux/console.h>
 #include <linux/io.h>
@@ -139,7 +140,7 @@ struct qcom_geni_serial_port {
 	bool cts_rts_swap;
 
 	struct qcom_geni_private_data private_data;
-	const struct qcom_geni_device_data *dev_data;
+	bool is_console;
 };
 
 static const struct uart_ops qcom_geni_console_pops;
@@ -1182,7 +1183,7 @@ static int qcom_geni_serial_port_setup(struct uart_port *uport)
 	geni_se_config_packing(port->se, BITS_PER_BYTE, BYTES_PER_FIFO_WORD,
 			       false, true, true);
 	geni_se_init(port->se, UART_RX_WM, port->rx_fifo_depth - 2);
-	geni_se_select_mode(port->se, port->dev_data->mode);
+	geni_se_select_mode(port->se, port->is_console ? GENI_SE_FIFO : GENI_SE_DMA);
 	port->setup = true;
 
 	return 0;
@@ -1632,7 +1633,7 @@ static const struct uart_ops qcom_geni_uart_pops = {
 	.pm = qcom_geni_serial_pm,
 };
 
-static int qcom_geni_serial_probe(struct platform_device *pdev)
+static int qcom_geni_serial_probe_common(struct device *dev, struct geni_se *se)
 {
 	int ret = 0;
 	int line;
@@ -1640,25 +1641,23 @@ static int qcom_geni_serial_probe(struct platform_device *pdev)
 	struct uart_port *uport;
 	struct resource *res;
 	struct uart_driver *drv;
-	const struct qcom_geni_device_data *data;
+	bool is_console;
 
-	data = of_device_get_match_data(&pdev->dev);
-	if (!data)
-		return -EINVAL;
+	is_console = !!of_device_get_match_data(se->dev);
 
-	if (data->console) {
+	if (is_console) {
 		drv = &qcom_geni_console_driver;
-		line = of_alias_get_id(pdev->dev.of_node, "serial");
+		line = of_alias_get_id(se->dev->of_node, "serial");
 	} else {
 		drv = &qcom_geni_uart_driver;
-		line = of_alias_get_id(pdev->dev.of_node, "serial");
+		line = of_alias_get_id(se->dev->of_node, "serial");
 		if (line == -ENODEV) /* compat with non-standard aliases */
-			line = of_alias_get_id(pdev->dev.of_node, "hsuart");
+			line = of_alias_get_id(se->dev->of_node, "hsuart");
 	}
 
-	port = get_port_from_line(line, data->console);
+	port = get_port_from_line(line, is_console);
 	if (IS_ERR(port)) {
-		dev_err(&pdev->dev, "Invalid line %d\n", line);
+		dev_err(dev, "Invalid line %d\n", line);
 		return PTR_ERR(port);
 	}
 
@@ -1667,15 +1666,15 @@ static int qcom_geni_serial_probe(struct platform_device *pdev)
 	if (uport->private_data)
 		return -ENODEV;
 
-	uport->dev = &pdev->dev;
-	port->dev_data = data;
+	uport->dev = dev;
+	port->is_console = is_console;
 
-	port->se = qcom_geni_alloc_se(pdev);
+	port->se = se;
 	if (IS_ERR(port->se))
 		return PTR_ERR(port->se);
 	uport->membase = port->se->base;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(to_platform_device(se->dev), IORESOURCE_MEM, 0);
 	if (!res)
 		return -EINVAL;
 	uport->mapbase = res->start;
@@ -1684,7 +1683,7 @@ static int qcom_geni_serial_probe(struct platform_device *pdev)
 	port->rx_fifo_depth = DEF_FIFO_DEPTH_WORDS;
 	port->tx_fifo_width = DEF_FIFO_WIDTH_BITS;
 
-	if (!data->console) {
+	if (!is_console) {
 		port->rx_buf = devm_kzalloc(uport->dev,
 					    DMA_RX_BUF_SIZE, GFP_KERNEL);
 		if (!port->rx_buf)
@@ -1700,28 +1699,28 @@ static int qcom_geni_serial_probe(struct platform_device *pdev)
 	uport->irq = port->se->irq;
 	uport->has_sysrq = IS_ENABLED(CONFIG_SERIAL_QCOM_GENI_CONSOLE);
 
-	if (!data->console)
-		port->wakeup_irq = platform_get_irq_optional(pdev, 1);
+	if (!is_console)
+		port->wakeup_irq = platform_get_irq_optional(to_platform_device(se->dev), 1);
 
-	if (of_property_read_bool(pdev->dev.of_node, "rx-tx-swap"))
+	if (of_property_read_bool(se->dev->of_node, "rx-tx-swap"))
 		port->rx_tx_swap = true;
 
-	if (of_property_read_bool(pdev->dev.of_node, "cts-rts-swap"))
+	if (of_property_read_bool(se->dev->of_node, "cts-rts-swap"))
 		port->cts_rts_swap = true;
 
-	ret = devm_pm_opp_set_clkname(&pdev->dev, "se");
+	ret = devm_pm_opp_set_clkname(dev, "se");
 	if (ret)
 		return ret;
 	/* OPP table is optional */
-	ret = devm_pm_opp_of_add_table(&pdev->dev);
+	ret = devm_pm_opp_of_add_table(dev);
 	if (ret && ret != -ENODEV) {
-		dev_err(&pdev->dev, "invalid OPP table in device tree\n");
+		dev_err(dev, "invalid OPP table in device tree\n");
 		return ret;
 	}
 
 	port->private_data.drv = drv;
 	uport->private_data = &port->private_data;
-	platform_set_drvdata(pdev, port);
+	dev_set_drvdata(dev, port);
 
 	irq_set_status_flags(uport->irq, IRQ_NOAUTOEN);
 	ret = devm_request_irq(uport->dev, uport->irq, qcom_geni_serial_isr,
@@ -1736,11 +1735,11 @@ static int qcom_geni_serial_probe(struct platform_device *pdev)
 		return ret;
 
 	if (port->wakeup_irq > 0) {
-		device_init_wakeup(&pdev->dev, true);
-		ret = dev_pm_set_dedicated_wake_irq(&pdev->dev,
+		device_init_wakeup(dev, true);
+		ret = dev_pm_set_dedicated_wake_irq(dev,
 						port->wakeup_irq);
 		if (ret) {
-			device_init_wakeup(&pdev->dev, false);
+			device_init_wakeup(dev, false);
 			ida_free(&port_ida, uport->line);
 			uart_remove_one_port(drv, uport);
 			return ret;
@@ -1792,16 +1791,6 @@ static int qcom_geni_serial_resume(struct device *dev)
 	return ret;
 }
 
-static const struct qcom_geni_device_data qcom_geni_console_data = {
-	.console = true,
-	.mode = GENI_SE_FIFO,
-};
-
-static const struct qcom_geni_device_data qcom_geni_uart_data = {
-	.console = false,
-	.mode = GENI_SE_DMA,
-};
-
 static const struct dev_pm_ops qcom_geni_serial_pm_ops = {
 	SYSTEM_SLEEP_PM_OPS(qcom_geni_serial_suspend, qcom_geni_serial_resume)
 };
@@ -1809,15 +1798,19 @@ static const struct dev_pm_ops qcom_geni_serial_pm_ops = {
 static const struct of_device_id qcom_geni_serial_match_table[] = {
 	{
 		.compatible = "qcom,geni-debug-uart",
-		.data = &qcom_geni_console_data,
+		.data = (void *)true,
 	},
 	{
 		.compatible = "qcom,geni-uart",
-		.data = &qcom_geni_uart_data,
 	},
 	{}
 };
 MODULE_DEVICE_TABLE(of, qcom_geni_serial_match_table);
+
+static int qcom_geni_serial_probe(struct platform_device *pdev)
+{
+	return qcom_geni_serial_probe_common(&pdev->dev, qcom_geni_alloc_se(pdev));
+}
 
 static struct platform_driver qcom_geni_serial_platform_driver = {
 	.remove = qcom_geni_serial_remove,
@@ -1828,6 +1821,42 @@ static struct platform_driver qcom_geni_serial_platform_driver = {
 		.pm = &qcom_geni_serial_pm_ops,
 	},
 };
+
+static const struct auxiliary_device_id geni_uart_devtype_aux[] = {
+	{ .name = "qcom_geni_se.geni_uart" },
+	{ }
+};
+MODULE_DEVICE_TABLE(auxiliary, geni_uart_devtype_aux);
+
+static int qcom_geni_serial_aux_probe(struct auxiliary_device *auxdev,
+				      const struct auxiliary_device_id *id)
+{
+	struct device *dev = &auxdev->dev;
+
+	return qcom_geni_serial_probe_common(dev, dev_get_drvdata(dev));
+}
+
+static void qcom_geni_serial_aux_remove(struct auxiliary_device *auxdev)
+{
+	struct device *dev = &auxdev->dev;
+	struct qcom_geni_serial_port *port = dev_get_drvdata(dev);
+	struct uart_port *uport = &port->uport;
+	struct uart_driver *drv = port->private_data.drv;
+
+	dev_pm_clear_wake_irq(dev);
+	device_init_wakeup(dev, false);
+	ida_free(&port_ida, uport->line);
+	uart_remove_one_port(drv, &port->uport);
+}
+
+static struct auxiliary_driver geni_uart_driver_aux = {
+	.name = "geni_uart",
+	.id_table = geni_uart_devtype_aux,
+	.probe = qcom_geni_serial_aux_probe,
+	.remove = qcom_geni_serial_aux_remove,
+	.driver.pm = &qcom_geni_serial_pm_ops,
+};
+module_auxiliary_driver(geni_uart_driver_aux);
 
 static int __init qcom_geni_serial_init(void)
 {
