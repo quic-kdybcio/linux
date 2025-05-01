@@ -1036,6 +1036,9 @@ static int adreno_get_pwrlevels(struct device *dev,
 		return ret;
 	}
 
+	/* Some platforms only come with a single speed bin and don't offer a fuse to read */
+	opp_table_allow_no_supported_hw(dev, true);
+
 	/* Find the fastest defined rate */
 	opp = dev_pm_opp_find_freq_floor(dev, &freq);
 	if (IS_ERR(opp))
