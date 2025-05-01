@@ -180,6 +180,7 @@ enum opp_table_access {
  * @required_opp_count: Number of required devices.
  * @supported_hw: Array of version number to support.
  * @supported_hw_count: Number of elements in supported_hw array.
+ * @allow_no_supported_hw_data: Whether to permit lack of "opp-supported-hw"
  * @prop_name: A name to postfix to many DT properties, while parsing them.
  * @config_clks: Platform specific config_clks() callback.
  * @clks: Device's clock handles, for multiple clocks.
@@ -230,6 +231,7 @@ struct opp_table {
 
 	unsigned int *supported_hw;
 	unsigned int supported_hw_count;
+	bool allow_no_supported_hw_data;
 	const char *prop_name;
 	config_clks_t config_clks;
 	struct clk **clks;

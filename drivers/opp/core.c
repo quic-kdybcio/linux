@@ -3023,3 +3023,34 @@ void dev_pm_opp_remove_table(struct device *dev)
 		dev_pm_opp_put_opp_table(opp_table);
 }
 EXPORT_SYMBOL_GPL(dev_pm_opp_remove_table);
+
+/**
+ * _opp_set_availability() - helper to set the availability of an opp
+ * @dev:		device for which we do this operation
+ * @freq:		OPP frequency to modify availability
+ *
+ * Set the availability of an OPP, opp_{enable,disable} share a common logic
+ * which is isolated here.
+ *
+ * Return: -EINVAL for bad pointers, -ENOMEM if no memory available for the
+ * copy operation, returns 0 if no modification was done OR modification was
+ * successful.
+ */
+int opp_table_allow_no_supported_hw(struct device *dev, bool state)
+{
+	struct dev_pm_opp *opp __free(put_opp) = ERR_PTR(-ENODEV);
+	struct opp_table *opp_table __free(put_opp_table);
+
+	/* Find the opp_table */
+	opp_table = _find_opp_table(dev);
+	if (IS_ERR(opp_table)) {
+		dev_warn(dev, "%s: Device OPP not found (%ld)\n", __func__,
+			 PTR_ERR(opp_table));
+		return PTR_ERR(opp_table);
+	}
+
+	opp_table->allow_no_supported_hw_data = state;
+
+	return 0;
+}
+EXPORT_SYMBOL_GPL(opp_table_allow_no_supported_hw);

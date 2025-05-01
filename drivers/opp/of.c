@@ -508,7 +508,7 @@ static bool _opp_is_supported(struct device *dev, struct opp_table *opp_table,
 		 * no way to see if the hardware supports it.
 		 */
 		if (of_property_present(np, "opp-supported-hw"))
-			return false;
+			return opp_table->allow_no_supported_hw_data;
 		else
 			return true;
 	}
