@@ -487,6 +487,7 @@ static void geni_se_clks_off(struct geni_se *se)
 {
 	struct geni_wrapper *wrapper = se->wrapper;
 
+	clk_disable_unprepare(se->core_clk);
 	clk_disable_unprepare(se->clk);
 	clk_bulk_disable_unprepare(wrapper->num_clks, wrapper->clks);
 }
@@ -518,6 +519,10 @@ static int geni_se_clks_on(struct geni_se *se)
 {
 	int ret;
 	struct geni_wrapper *wrapper = se->wrapper;
+
+	ret = clk_prepare_enable(se->core_clk);
+	if (ret)
+		return ret;
 
 	ret = clk_bulk_prepare_enable(wrapper->num_clks, wrapper->clks);
 	if (ret)
