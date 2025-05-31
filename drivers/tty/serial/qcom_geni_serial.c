@@ -11,7 +11,6 @@
 #include <linux/irq.h>
 #include <linux/module.h>
 #include <linux/of.h>
-#include <linux/pm_opp.h>
 #include <linux/platform_device.h>
 #include <linux/pm_runtime.h>
 #include <linux/pm_wakeirq.h>
@@ -1311,7 +1310,7 @@ static void qcom_geni_serial_set_termios(struct uart_port *uport,
 
 	uport->uartclk = clk_rate;
 	port->clk_rate = clk_rate;
-	dev_pm_opp_set_rate(uport->dev, clk_rate);
+	geni_se_set_freq(port->se, clk_rate);
 	ser_clk_cfg = SER_CLK_EN;
 	ser_clk_cfg |= clk_div << CLK_DIV_SHFT;
 
@@ -1583,12 +1582,12 @@ static void qcom_geni_serial_pm(struct uart_port *uport,
 
 	if (new_state == UART_PM_STATE_ON && old_state == UART_PM_STATE_OFF) {
 		if (port->clk_rate)
-			dev_pm_opp_set_rate(uport->dev, port->clk_rate);
+			geni_se_set_freq(port->se, port->clk_rate);
 		geni_se_resources_on(port->se);
 	} else if (new_state == UART_PM_STATE_OFF &&
 			old_state == UART_PM_STATE_ON) {
 		geni_se_resources_off(port->se);
-		dev_pm_opp_set_rate(uport->dev, 0);
+		geni_se_set_freq(port->se, 0);
 	}
 }
 
