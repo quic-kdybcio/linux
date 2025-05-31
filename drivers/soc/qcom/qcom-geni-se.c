@@ -483,6 +483,12 @@ void geni_se_config_packing(struct geni_se *se, int bpw, int pack_words,
 }
 EXPORT_SYMBOL_GPL(geni_se_config_packing);
 
+int geni_se_set_freq(struct geni_se *se, unsigned long freq)
+{
+	return dev_pm_opp_set_rate(se->dev, freq);
+}
+EXPORT_SYMBOL_GPL(geni_se_set_freq);
+
 static void geni_se_clks_off(struct geni_se *se)
 {
 	struct geni_wrapper *wrapper = se->wrapper;

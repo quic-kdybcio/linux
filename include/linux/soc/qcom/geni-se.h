@@ -528,6 +528,8 @@ int geni_icc_get(struct geni_se *se, const char *icc_ddr);
 int geni_icc_set_bw_ab(struct geni_se *se, u32 core_ab, u32 cfg_ab, u32 ddr_ab);
 void geni_icc_set_tag(struct geni_se *se, u32 tag);
 
+int geni_se_set_freq(struct geni_se *se, unsigned long freq);
+
 struct geni_se *qcom_geni_alloc_se(struct platform_device *pdev);
 #endif
 #endif
