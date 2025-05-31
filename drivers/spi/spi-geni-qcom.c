@@ -9,7 +9,6 @@
 #include <linux/log2.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>
-#include <linux/pm_opp.h>
 #include <linux/pm_runtime.h>
 #include <linux/property.h>
 #include <linux/soc/qcom/geni-se.h>
@@ -134,9 +133,9 @@ static int get_spi_clk_cfg(unsigned int speed_hz,
 
 	dev_dbg(mas->dev, "req %u=>%u sclk %lu, idx %d, div %d\n", speed_hz,
 				actual_hz, sclk_freq, *clk_idx, *clk_div);
-	ret = dev_pm_opp_set_rate(mas->dev, sclk_freq);
+	ret = geni_se_set_freq(mas->se, sclk_freq);
 	if (ret)
-		dev_err(mas->dev, "dev_pm_opp_set_rate failed %d\n", ret);
+		dev_err(mas->dev, "Couldn't set rate %lu: %d\n", sclk_freq, ret);
 	else
 		mas->cur_sclk_hz = sclk_freq;
 
@@ -1137,7 +1136,7 @@ static int __maybe_unused spi_geni_runtime_suspend(struct device *dev)
 	struct spi_geni_master *mas = spi_controller_get_devdata(spi);
 
 	/* Drop the performance state vote */
-	dev_pm_opp_set_rate(dev, 0);
+	geni_se_set_freq(mas->se, 0);
 
 	return geni_se_resources_off(mas->se);
 }
@@ -1152,7 +1151,7 @@ static int __maybe_unused spi_geni_runtime_resume(struct device *dev)
 	if (ret)
 		return ret;
 
-	return dev_pm_opp_set_rate(mas->dev, mas->cur_sclk_hz);
+	return geni_se_set_freq(mas->se, mas->cur_sclk_hz);
 }
 
 static int __maybe_unused spi_geni_suspend(struct device *dev)
