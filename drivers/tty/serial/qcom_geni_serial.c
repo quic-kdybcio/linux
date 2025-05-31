@@ -1582,7 +1582,6 @@ static void qcom_geni_serial_pm(struct uart_port *uport,
 		old_state = UART_PM_STATE_OFF;
 
 	if (new_state == UART_PM_STATE_ON && old_state == UART_PM_STATE_OFF) {
-		geni_icc_enable(port->se);
 		if (port->clk_rate)
 			dev_pm_opp_set_rate(uport->dev, port->clk_rate);
 		geni_se_resources_on(port->se);
@@ -1590,7 +1589,6 @@ static void qcom_geni_serial_pm(struct uart_port *uport,
 			old_state == UART_PM_STATE_ON) {
 		geni_se_resources_off(port->se);
 		dev_pm_opp_set_rate(uport->dev, 0);
-		geni_icc_disable(port->se);
 	}
 }
 
