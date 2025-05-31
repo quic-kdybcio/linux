@@ -502,6 +502,7 @@ static void geni_se_clks_off(struct geni_se *se)
 int geni_se_resources_off(struct geni_se *se)
 {
 	int ret;
+	int i;
 
 	if (has_acpi_companion(se->dev))
 		return 0;
@@ -511,6 +512,16 @@ int geni_se_resources_off(struct geni_se *se)
 		return ret;
 
 	geni_se_clks_off(se);
+
+	for (i = 0; i < ARRAY_SIZE(se->icc_paths); i++) {
+		ret = icc_disable(se->icc_paths[i]);
+		if (ret) {
+			dev_err_ratelimited(se->dev, "ICC disable failed on path '%s': %d\n",
+					    icc_path_names[i], ret);
+			return ret;
+		}
+	}
+
 	return 0;
 }
 EXPORT_SYMBOL_GPL(geni_se_resources_off);
@@ -544,9 +555,19 @@ static int geni_se_clks_on(struct geni_se *se)
 int geni_se_resources_on(struct geni_se *se)
 {
 	int ret;
+	int i;
 
 	if (has_acpi_companion(se->dev))
 		return 0;
+
+	for (i = 0; i < ARRAY_SIZE(se->icc_paths); i++) {
+		ret = icc_enable(se->icc_paths[i]);
+		if (ret) {
+			dev_err_ratelimited(se->dev, "ICC enable failed on path '%s': %d\n",
+					    icc_path_names[i], ret);
+			return ret;
+		}
+	}
 
 	ret = geni_se_clks_on(se);
 	if (ret)
@@ -874,37 +895,14 @@ void geni_icc_set_tag(struct geni_se *se, u32 tag)
 }
 EXPORT_SYMBOL_GPL(geni_icc_set_tag);
 
-/* To do: Replace this by icc_bulk_enable once it's implemented in ICC core */
 int geni_icc_enable(struct geni_se *se)
 {
-	int i, ret;
-
-	for (i = 0; i < ARRAY_SIZE(se->icc_paths); i++) {
-		ret = icc_enable(se->icc_paths[i]);
-		if (ret) {
-			dev_err_ratelimited(se->dev, "ICC enable failed on path '%s': %d\n",
-					icc_path_names[i], ret);
-			return ret;
-		}
-	}
-
 	return 0;
 }
 EXPORT_SYMBOL_GPL(geni_icc_enable);
 
 int geni_icc_disable(struct geni_se *se)
 {
-	int i, ret;
-
-	for (i = 0; i < ARRAY_SIZE(se->icc_paths); i++) {
-		ret = icc_disable(se->icc_paths[i]);
-		if (ret) {
-			dev_err_ratelimited(se->dev, "ICC disable failed on path '%s': %d\n",
-					icc_path_names[i], ret);
-			return ret;
-		}
-	}
-
 	return 0;
 }
 EXPORT_SYMBOL_GPL(geni_icc_disable);
