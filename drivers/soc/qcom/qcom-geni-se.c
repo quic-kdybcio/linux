@@ -895,18 +895,6 @@ void geni_icc_set_tag(struct geni_se *se, u32 tag)
 }
 EXPORT_SYMBOL_GPL(geni_icc_set_tag);
 
-int geni_icc_enable(struct geni_se *se)
-{
-	return 0;
-}
-EXPORT_SYMBOL_GPL(geni_icc_enable);
-
-int geni_icc_disable(struct geni_se *se)
-{
-	return 0;
-}
-EXPORT_SYMBOL_GPL(geni_icc_disable);
-
 static int geni_se_probe(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
