@@ -14,6 +14,7 @@
 #include <linux/of_platform.h>
 #include <linux/pinctrl/consumer.h>
 #include <linux/platform_device.h>
+#include <linux/pm_domain.h>
 #include <linux/pm_opp.h>
 #include <linux/soc/qcom/geni-se.h>
 
@@ -483,8 +484,19 @@ void geni_se_config_packing(struct geni_se *se, int bpw, int pack_words,
 }
 EXPORT_SYMBOL_GPL(geni_se_config_packing);
 
+enum geni_se_scmi_pds {
+	GENISE_PD_POWER,
+	GENISE_PD_PERF,
+	GENISE_PD_NUM
+};
+
 int geni_se_set_freq(struct geni_se *se, unsigned long freq)
 {
+	struct dev_pm_domain_list *pd_list = se->pd_list;
+
+	if (pd_list)
+		return dev_pm_opp_set_level(pd_list->pd_devs[GENISE_PD_PERF], freq);
+
 	return dev_pm_opp_set_rate(se->dev, freq);
 }
 EXPORT_SYMBOL_GPL(geni_se_set_freq);
@@ -988,6 +1000,12 @@ static struct platform_driver geni_se_driver = {
 };
 module_platform_driver(geni_se_driver);
 
+static const struct dev_pm_domain_attach_data scmi_pd_data = {
+	.pd_flags = PD_FLAG_DEV_LINK_ON,
+	.pd_names = (const char * []) { "power", "perf" },
+	.num_pd_names = 2,
+};
+
 struct geni_se *qcom_geni_alloc_se(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
@@ -1020,20 +1038,31 @@ struct geni_se *qcom_geni_alloc_se(struct platform_device *pdev)
 		return ERR_PTR(ret);
 
 	se->clk = devm_clk_get(dev, "se");
-	if (IS_ERR(se->clk))
-		return ERR_CAST(se->clk);
+	if (IS_ERR(se->clk)) {
+		if (PTR_ERR(se->clk) == -ENOENT) {
+			se->clk = NULL;
 
-	se->core_clk = devm_clk_get_optional(dev, "core");
-	if (IS_ERR(se->core_clk))
-		return ERR_CAST(se->core_clk);
+			ret = devm_pm_domain_attach_list(dev, &scmi_pd_data, &se->pd_list);
+			if (ret < 0)
+				return ERR_PTR(ret);
+			else if (ret != GENISE_PD_NUM)
+				return ERR_PTR(-EINVAL);
+		} else {
+			return ERR_CAST(se->clk);
+		}
+	} else {
+		ret = devm_pm_opp_set_clkname(dev, "se");
+		if (ret)
+			return ERR_PTR(ret);
 
-	ret = devm_pm_opp_set_clkname(dev, "se");
-	if (ret)
-		return ERR_PTR(ret);
+		se->core_clk = devm_clk_get_optional(dev, "core");
+		if (IS_ERR(se->core_clk))
+			return ERR_CAST(se->core_clk);
+	}
 
-	/* OPP table is optional */
+	/* OPP table is optional if Linux manages clocks */
 	ret = devm_pm_opp_of_add_table(dev);
-	if (ret && ret != -ENODEV) {
+	if (ret && (se->pd_list || (!se->pd_list && ret != -ENODEV))) {
 		dev_err(dev, "invalid OPP table in device tree\n");
 		return ERR_PTR(ret);
 	}

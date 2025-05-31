@@ -58,6 +58,7 @@ enum geni_icc_path_index {
  * @num_clk_levels:	Number of valid clock levels in clk_perf_tbl
  * @clk_perf_tbl:	Table of clock frequency input to serial engine clock
  * @icc_paths:		Array of ICC paths for SE
+ * @pd_list:		List of associated power domains
  * @irq:		Index of the interrupt line connected to this SE
  */
 struct geni_se {
@@ -69,6 +70,7 @@ struct geni_se {
 	unsigned int num_clk_levels;
 	unsigned long *clk_perf_tbl;
 	struct icc_path *icc_paths[3];
+	struct dev_pm_domain_list *pd_list;
 	int irq;
 };
 
