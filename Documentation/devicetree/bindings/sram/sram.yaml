@@ -25,17 +25,19 @@ properties:
     pattern: "^sram(@.*)?"
 
   compatible:
-    contains:
-      enum:
-        - mmio-sram
-        - amlogic,meson-gxbb-sram
-        - arm,juno-sram-ns
-        - atmel,sama5d2-securam
-        - nvidia,tegra186-sysram
-        - nvidia,tegra194-sysram
-        - nvidia,tegra234-sysram
-        - qcom,rpm-msg-ram
-        - rockchip,rk3288-pmu-sram
+    oneOf:
+      - const: mmio-sram
+      - items:
+          - enum:
+              - amlogic,meson-gxbb-sram
+              - arm,juno-sram-ns
+              - atmel,sama5d2-securam
+              - nvidia,tegra186-sysram
+              - nvidia,tegra194-sysram
+              - nvidia,tegra234-sysram
+              - qcom,rpm-msg-ram
+              - rockchip,rk3288-pmu-sram
+          - const: mmio-sram
 
   reg:
     maxItems: 1
