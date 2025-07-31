@@ -39,6 +39,12 @@ properties:
               - qcom,rpm-msg-ram
               - rockchip,rk3288-pmu-sram
           - const: mmio-sram
+      - items:
+          - enum:
+              - microchip,sama7d65-securam
+              - microchip,sama7g5-securam
+          - const: atmel,sama5d2-securam
+          - const: mmio-sram
 
   reg:
     maxItems: 1
