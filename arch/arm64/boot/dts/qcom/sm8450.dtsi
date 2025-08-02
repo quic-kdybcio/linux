@@ -4939,14 +4939,16 @@
 		};
 
 		sram@146aa000 {
-			compatible = "qcom,sm8450-imem", "syscon", "simple-mfd";
+			compatible = "qcom,sm8450-imem", "mmio-sram";
 			reg = <0 0x146aa000 0 0x1000>;
 			ranges = <0 0 0x146aa000 0x1000>;
+
+			no-memory-wc;
 
 			#address-cells = <1>;
 			#size-cells = <1>;
 
-			pil-reloc@94c {
+			pil-reloc-sram@94c {
 				compatible = "qcom,pil-reloc-info";
 				reg = <0x94c 0xc8>;
 			};

@@ -5026,6 +5026,22 @@
 			};
 		};
 
+		sram@14680000 {
+			compatible = "qcom,sc8280xp-imem", "mmio-sram";
+			reg = <0 0x14680000 0 0x40000>;
+			ranges = <0 0 0x14680000 0x40000>;
+
+			no-memory-wc;
+
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			// pil-reloc-sram@94c {
+			// 	compatible = "qcom,pil-reloc-info";
+			// 	reg = <0x94c 0xc8>;
+			// };
+		};
+
 		pcie_smmu: iommu@14f80000 {
 			compatible = "arm,smmu-v3";
 			reg = <0 0x14f80000 0 0x80000>;
