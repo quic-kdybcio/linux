@@ -130,6 +130,10 @@
 	};
 };
 
+&eud_con {
+	remote-endpoint = <&anx_hs_in>;
+};
+
 &gpi_dma0 {
 	status = "okay";
 };
@@ -185,7 +189,7 @@
 					reg = <0>;
 
 					anx_hs_in: endpoint {
-						remote-endpoint = <&usb_dwc3_hs>;
+						remote-endpoint = <&eud_con>;
 					};
 				};
 
@@ -524,10 +528,6 @@
 
 &usb {
 	status = "okay";
-};
-
-&usb_dwc3_hs {
-	remote-endpoint = <&anx_hs_in>;
 };
 
 &usb_hsphy {

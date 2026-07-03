@@ -735,6 +735,43 @@
 			};
 		};
 
+		eud: eud@1610000 {
+			compatible = "qcom,sc7280-eud", "qcom,eud";
+			reg = <0x0 0x01610000 0x0 0x2000>,
+			      <0x0 0x01612000 0x0 0x1000>;
+			interrupts = <GIC_SPI 189 IRQ_TYPE_LEVEL_HIGH>;
+
+			qcom,tcsr-check = <&tcsr_regs 0x25018 0>;
+
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			eud0: eud-path@0 {
+				reg = <0>;
+				usb-role-switch;
+
+				ports {
+					#address-cells = <1>;
+					#size-cells = <0>;
+
+					port@0 {
+						reg = <0>;
+
+						eud_usb: endpoint {
+							remote-endpoint = <&usb_dwc3_hs>;
+						};
+					};
+
+					port@1 {
+						reg = <1>;
+
+						eud_con: endpoint {
+						};
+					};
+				};
+			};
+		};
+
 		lpass_tlmm: pinctrl@a7c0000 {
 			compatible = "qcom,qcm2290-lpass-lpi-pinctrl",
 				     "qcom,sm6115-lpass-lpi-pinctrl";
@@ -1633,6 +1670,7 @@
 					reg = <0>;
 
 					usb_dwc3_hs: endpoint {
+						remote-endpoint = <&eud_usb>;
 					};
 				};
 
