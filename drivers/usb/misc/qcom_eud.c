@@ -11,6 +11,7 @@
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/of.h>
+#include <linux/of_address.h>
 #include <linux/of_graph.h>
 #include <linux/phy/phy.h>
 #include <linux/platform_device.h>
@@ -491,9 +492,13 @@ static int eud_init_path(struct eud_chip *chip, struct device_node *np)
 static int eud_probe(struct platform_device *pdev)
 {
 	struct device_node *np = pdev->dev.of_node;
+	struct device_node *syscon_np;
 	struct eud_chip *chip;
 	struct resource *res;
 	int ret;
+
+	if (!qcom_scm_is_available())
+		return -EPROBE_DEFER;
 
 	chip = devm_kzalloc(&pdev->dev, sizeof(*chip), GFP_KERNEL);
 	if (!chip)
@@ -502,6 +507,29 @@ static int eud_probe(struct platform_device *pdev)
 	chip->dev = &pdev->dev;
 
 	mutex_init(&chip->state_lock);
+
+	/* Some platforms first need to set a bit in a TCSR register to allow EUD enable */
+	syscon_np = of_parse_phandle(chip->dev->of_node, "qcom,tcsr-check", 0);
+	if (syscon_np) {
+		struct of_phandle_args args;
+		struct resource tcsr_res;
+
+		ret = of_address_to_resource(syscon_np, 0, &tcsr_res);
+		if (ret)
+			return ret;
+
+		of_node_put(syscon_np);
+
+		ret = of_parse_phandle_with_fixed_args(np, "qcom,tcsr-check", 2, 0, &args);
+		if (ret)
+			return ret;
+
+		of_node_put(args.np);
+
+		ret = qcom_scm_io_writel(tcsr_res.start + args.args[0], BIT(args.args[1]));
+		if (ret)
+			return dev_err_probe(chip->dev, ret, "Failed to set TCSR bit!\n");
+	}
 
 	for_each_child_of_node_scoped(np, child) {
 		ret = eud_init_path(chip, child);
