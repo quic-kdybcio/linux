@@ -758,7 +758,8 @@
 	pinctrl-0 = <&pcie4_default>;
 	pinctrl-names = "default";
 
-	status = "okay";
+// HACK: kick atheros
+//	status = "okay";
 };
 
 &pcie4_phy {
@@ -815,7 +816,8 @@
 	pinctrl-0 = <&pcie6_default>;
 	pinctrl-names = "default";
 
-	status = "okay";
+// HACK: kick modem
+//	status = "okay";
 };
 
 &pcie6_phy {

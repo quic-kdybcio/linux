@@ -3821,7 +3821,7 @@
 		};
 
 		gpu: gpu@3d00000 {
-			compatible = "qcom,adreno-44070001", "qcom,adreno";
+			// compatible = "qcom,adreno-44070001", "qcom,adreno";
 			reg = <0x0 0x03d00000 0x0 0x6c000>,
 			      <0x0 0x03d9e000 0x0 0x2000>;
 			reg-names = "kgsl_3d0_reg_memory",
@@ -3944,7 +3944,7 @@
 		};
 
 		gxclkctl: clock-controller@3d64000 {
-			compatible = "qcom,glymur-gxclkctl";
+			// compatible = "qcom,glymur-gxclkctl";
 			reg = <0x0 0x03d64000 0x0 0x6000>;
 
 			power-domains = <&rpmhpd RPMHPD_GFX>,
@@ -3955,7 +3955,7 @@
 		};
 
 		gmu: gmu@3d6c000 {
-			compatible = "qcom,adreno-gmu-x285.1", "qcom,adreno-gmu";
+			// compatible = "qcom,adreno-gmu-x285.1", "qcom,adreno-gmu";
 
 			reg = <0x0 0x03d6c000 0x0 0x32000>;
 			reg-names = "gmu";
@@ -4015,7 +4015,7 @@
 		};
 
 		gpucc: clock-controller@3d90000 {
-			compatible = "qcom,glymur-gpucc";
+			// compatible = "qcom,glymur-gpucc";
 			reg = <0x0 0x03d90000 0x0 0x9800>;
 			clocks = <&rpmhcc RPMH_CXO_CLK>,
 				<&gcc GCC_GPU_GPLL0_CLK_SRC>,
@@ -4032,8 +4032,8 @@
 		};
 
 		adreno_smmu: iommu@3da0000 {
-			compatible = "qcom,glymur-smmu-500", "qcom,adreno-smmu",
-				     "qcom,smmu-500", "arm,mmu-500";
+			// compatible = "qcom,glymur-smmu-500", "qcom,adreno-smmu",
+			// 	     "qcom,smmu-500", "arm,mmu-500";
 			reg = <0x0 0x03da0000 0x0 0x40000>;
 			#iommu-cells = <2>;
 			#global-interrupts = <1>;
