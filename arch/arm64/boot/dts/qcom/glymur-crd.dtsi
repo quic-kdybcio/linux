@@ -595,7 +595,7 @@
 	status = "okay";
 
 	embedded-controller@76 {
-		compatible = "qcom,glymur-crd-ec", "qcom,hamoa-crd-ec";
+	//	compatible = "qcom,glymur-crd-ec", "qcom,hamoa-crd-ec";
 		reg = <0x76>;
 
 		interrupts-extended = <&tlmm 66 IRQ_TYPE_EDGE_FALLING>;
