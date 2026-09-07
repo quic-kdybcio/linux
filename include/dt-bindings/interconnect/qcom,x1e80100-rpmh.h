@@ -97,6 +97,12 @@
 #define SLAVE_PCIE_6A				14
 #define SLAVE_PCIE_6B				15
 
+/* On Purwa, this is part of CNOC_main instead of CNOC_config on Hamoa. */
+#define CNOC_MAIN_SLAVE_PCIE_4_CFG		16
+
+/* On Purwa, this is part of CNOC_main instead of CNOC_config on Hamoa. */
+#define CNOC_MAIN_SLAVE_IPC_ROUTER_CFG	17
+
 #define MASTER_GPU_TCU				0
 #define MASTER_PCIE_TCU				1
 #define MASTER_SYS_TCU				2
@@ -112,6 +118,8 @@
 #define SLAVE_GEM_NOC_CNOC			12
 #define SLAVE_LLCC				13
 #define SLAVE_MEM_NOC_PCIE_SNOC			14
+
+#define MASTER_WLAN_Q6				15
 
 #define MASTER_LPIAON_NOC			0
 #define SLAVE_LPASS_GEM_NOC			1

@@ -22,26 +22,51 @@ description: |
 
 properties:
   compatible:
-    enum:
-      - qcom,x1e80100-aggre1-noc
-      - qcom,x1e80100-aggre2-noc
-      - qcom,x1e80100-clk-virt
-      - qcom,x1e80100-cnoc-cfg
-      - qcom,x1e80100-cnoc-main
-      - qcom,x1e80100-gem-noc
-      - qcom,x1e80100-lpass-ag-noc
-      - qcom,x1e80100-lpass-lpiaon-noc
-      - qcom,x1e80100-lpass-lpicx-noc
-      - qcom,x1e80100-mc-virt
-      - qcom,x1e80100-mmss-noc
-      - qcom,x1e80100-nsp-noc
-      - qcom,x1e80100-pcie-center-anoc
-      - qcom,x1e80100-pcie-north-anoc
-      - qcom,x1e80100-pcie-south-anoc
-      - qcom,x1e80100-system-noc
-      - qcom,x1e80100-usb-center-anoc
-      - qcom,x1e80100-usb-north-anoc
-      - qcom,x1e80100-usb-south-anoc
+    oneOf:
+      - items:
+          - enum:
+              - qcom,x1p42100-cnoc-cfg
+          - const: qcom,x1e80100-cnoc-cfg
+      - items:
+          - enum:
+              - qcom,x1p42100-cnoc-main
+          - const: qcom,x1e80100-cnoc-main
+      - items:
+          - enum:
+              - qcom,x1p42100-gem-noc
+          - const: qcom,x1e80100-gem-noc
+      - items:
+          - enum:
+              - qcom,x1p42100-mmss-noc
+          - const: qcom,x1e80100-mmss-noc
+      - items:
+          - enum:
+              - qcom,x1p42100-pcie-north-anoc
+          - const: qcom,x1e80100-pcie-north-anoc
+      - items:
+          - enum:
+              - qcom,x1p42100-pcie-south-anoc
+          - const: qcom,x1e80100-pcie-south-anoc
+      - enum:
+          - qcom,x1e80100-aggre1-noc
+          - qcom,x1e80100-aggre2-noc
+          - qcom,x1e80100-clk-virt
+          - qcom,x1e80100-cnoc-cfg
+          - qcom,x1e80100-cnoc-main
+          - qcom,x1e80100-gem-noc
+          - qcom,x1e80100-lpass-ag-noc
+          - qcom,x1e80100-lpass-lpiaon-noc
+          - qcom,x1e80100-lpass-lpicx-noc
+          - qcom,x1e80100-mc-virt
+          - qcom,x1e80100-mmss-noc
+          - qcom,x1e80100-nsp-noc
+          - qcom,x1e80100-pcie-center-anoc
+          - qcom,x1e80100-pcie-north-anoc
+          - qcom,x1e80100-pcie-south-anoc
+          - qcom,x1e80100-system-noc
+          - qcom,x1e80100-usb-center-anoc
+          - qcom,x1e80100-usb-north-anoc
+          - qcom,x1e80100-usb-south-anoc
 
   reg:
     maxItems: 1
