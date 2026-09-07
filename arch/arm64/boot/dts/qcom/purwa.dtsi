@@ -43,8 +43,23 @@
 	compatible = "qcom,x1p42100-camcc";
 };
 
+&cnoc_main {
+	compatible = "qcom,x1p42100-cnoc-main",
+		     "qcom,x1e80100-cnoc-main";
+};
+
+&config_noc {
+	compatible = "qcom,x1p42100-cnoc-cfg",
+		     "qcom,x1e80100-cnoc-cfg";
+};
+
 &gcc {
 	compatible = "qcom,x1p42100-gcc", "qcom,x1e80100-gcc";
+};
+
+&gem_noc {
+	compatible = "qcom,x1p42100-gem-noc",
+		     "qcom,x1e80100-gem-noc";
 };
 
 &gmu {
@@ -215,6 +230,11 @@
 	};
 };
 
+&mmss_noc {
+	compatible = "qcom,x1p42100-mmss-noc",
+		     "qcom,x1e80100-mmss-noc";
+};
+
 /* PCIe3 has half the lanes compared to X1E80100 */
 &pcie3 {
 	num-lanes = <4>;
@@ -222,6 +242,16 @@
 
 &pcie6a_phy {
 	compatible = "qcom,x1p42100-qmp-gen4x4-pcie-phy";
+};
+
+&pcie_north_anoc {
+	compatible = "qcom,x1p42100-pcie-north-anoc",
+		     "qcom,x1e80100-pcie-north-anoc";
+};
+
+&pcie_south_anoc {
+	compatible = "qcom,x1p42100-pcie-south-anoc",
+		     "qcom,x1e80100-pcie-south-anoc";
 };
 
 &qfprom {
